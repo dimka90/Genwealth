@@ -1,7 +1,7 @@
 export default function HowTo() {
   return (
     <div className="bg-black">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 py-8  px-16">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 py-8 px-28">
         <div className="border-r border-gray-800 pr-8">
           <h3 className="font-semibold">Sign In with Your Email</h3>
           <p className="text-gray-400 text-xs">
