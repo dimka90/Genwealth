@@ -3,13 +3,15 @@
 import CustomCursor from "@/components/CustomCursor";
 import Hero from "@/components/Hero";
 import HowTo from "@/components/HowTo";
+import Navbar from "@/components/Navbar";
 
 export default function Home() {
   return (
     <div className="">
       <CustomCursor />
-     <Hero />
-     <HowTo />
+      <Navbar />
+      <Hero />
+      <HowTo />
     </div>
   );
 }

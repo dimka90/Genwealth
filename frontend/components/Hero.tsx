@@ -58,7 +58,7 @@ export default function Hero() {
             whileTap={{ scale: 0.95 }}
           >
             <Link
-              href={""}
+              href="/signin"
               className="bg-gradient-to-br from-indigo-700 to-indigo-500 px-6 py-2 rounded-md block transition-all duration-200 hover:from-indigo-600 hover:to-indigo-400 text-sm sm:text-base"
             >
               Get Started
