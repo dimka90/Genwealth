@@ -1,4 +1,4 @@
-import RecoveryFlow from '../components/recovery/RecoveryFlow';
+import RecoveryFlow from "@/components/RecoveryFlow";
 
 export default function RecoveryPage() {
   return (

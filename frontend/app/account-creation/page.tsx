@@ -1,23 +1,23 @@
 import { useState } from 'react';
-import ProgressStepper from '../components/ui/ProgressStepper';
-import SeedPhraseEntry from '../components/account/SeedPhraseEntry';
-import BankDetailsEntry from '../components/account/BankDetailsEntry';
+// import ProgressStepper from '@/components/ProgressStepper';
+import SeedPhraseEntry from '@/components/SeedPhraseEntry';
+import BankDetailsEntry from '@/components/BankDetailsEntry';
 
 export default function AccountCreation() {
   const [activeTab, setActiveTab] = useState<'seed' | 'bank'>('seed');
   
-  const steps = [
-    { id: '01', name: 'Sign In', status: 'complete' },
-    { id: '02', name: 'Account Setup', status: 'current' },
-    { id: '03', name: 'Trustees', status: 'upcoming' },
-    { id: '04', name: 'Documents', status: 'upcoming' },
-  ];
+  // const steps = [
+  //   { id: '01', name: 'Sign In', status: 'complete' },
+  //   { id: '02', name: 'Account Setup', status: 'current' },
+  //   { id: '03', name: 'Trustees', status: 'upcoming' },
+  //   { id: '04', name: 'Documents', status: 'upcoming' },
+  // ];
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
+    <div className="min-h-screen text-white p-4">
       <div className="max-w-4xl mx-auto">
         <div className="py-8">
-          <ProgressStepper steps={steps} />
+          {/* <ProgressStepper steps={steps} /> */}
         </div>
         
         <div className="flex justify-center mb-8">

@@ -1,3 +1,4 @@
+'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaShieldAlt, FaKey, FaCheckCircle } from 'react-icons/fa';
@@ -20,7 +21,7 @@ export default function RecoveryFlow() {
       {activeStep === 'initiate' && (
         <div className="space-y-6">
           <p className="text-gray-300">
-            Your account has been inactive for more than 3 months. To recover access, we'll need at least 2 of your 3 trustees to submit their recovery shares.
+            Your account has been inactive for more than 3 months. To recover access, we will need at least 2 of your 3 trustees to submit their recovery shares.
           </p>
           
           <div className="p-4 bg-gray-700 rounded-lg">
@@ -66,7 +67,7 @@ export default function RecoveryFlow() {
           </div>
           
           <p className="text-gray-300">
-            Waiting for your trustees to submit their shares. You'll be notified when enough shares are collected.
+            Waiting for your trustees to submit their shares. You will be notified when enough shares are collected.
           </p>
           
           <div className="p-4 bg-gray-700 rounded-lg">

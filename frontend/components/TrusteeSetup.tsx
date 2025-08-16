@@ -1,3 +1,4 @@
+'use client';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FaUserShield, FaCheck } from 'react-icons/fa';

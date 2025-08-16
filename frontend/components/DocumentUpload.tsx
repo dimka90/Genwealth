@@ -1,3 +1,4 @@
+'use client';
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { FaUpload, FaFile, FaSpinner } from 'react-icons/fa';
