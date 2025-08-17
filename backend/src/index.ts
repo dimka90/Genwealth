@@ -4,6 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import vaultRecoveryRouter from "./routes/recovery";
 
 import cors from "cors";
 import { errorHandler } from "./middleware/errorHandler";
@@ -42,10 +43,9 @@ if (process.env.NODE_ENV === "development") {
 } else {
   app.use(morgan("combined"));
 }
-
+app.use("/api/recovery", vaultRecoveryRouter);
 app.use("/api/vaults", vaultRouter);
 app.use("/api", routes);
-
 
 app.use(notFound);
 app.use(errorHandler);

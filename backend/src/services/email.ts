@@ -56,7 +56,7 @@ class EmailService {
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 Digital Inheritance Recovery Request</h1>
+            <h1>Digital Inheritance Recovery Request</h1>
         </div>
         
         <div class="content">
@@ -71,11 +71,10 @@ class EmailService {
                 <ul>
                     <li><strong>Vault:</strong> ${vaultTitle}</li>
                     <li><strong>Owner:</strong> ${ownerEmail}</li>
-                    <li><strong>Recovery Token:</strong> <code>${recoveryToken}</code></li>
                 </ul>
             </div>
             
-            <h3>🔑 What you need to do:</h3>
+            <h3>What you need to do:</h3>
             <ol>
                 <li>Click the recovery link below</li>
                 <li>Enter the recovery password that <strong>${ownerName || 'the owner'}</strong> shared with you offline</li>
@@ -83,23 +82,13 @@ class EmailService {
             </ol>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${recoveryLink}" class="recovery-link">🚀 Start Recovery Process</a>
+                <a href="${recoveryLink}" class="recovery-link">Start Recovery Process</a>
             </div>
-            
-            <div class="warning">
-                <strong>⚠️ Important Security Notice:</strong><br>
-                • Only proceed if you are the intended trustee<br>
-                • You will need the recovery password shared with you offline<br>
-                • This link is unique and secure - do not share it<br>
-                • Contact support if you believe this email was sent in error
-            </div>
-            
             <p>If you have any questions or concerns, please contact our support team.</p>
         </div>
         
         <div class="footer">
             <p>This email was sent by Digital Inheritance System. This is an automated message regarding recovery access for digital assets.</p>
-            <p><strong>Recovery Link:</strong> ${recoveryLink}</p>
         </div>
     </div>
 </body>
