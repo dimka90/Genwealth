@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import WalletAddress from "./WalletAddress";
+
 
 const Nav = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -38,12 +40,7 @@ const Nav = () => {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link
-              href="/signin"
-              className="text-gray-300 hover:text-white font-medium transition-colors"
-            >
-              wallet address 
-            </Link>
+           <WalletAddress />
           </div>
 
           {/* Mobile Menu Button */}
