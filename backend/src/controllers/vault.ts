@@ -1,4 +1,3 @@
-// src/controllers/vault.ts
 import { Request, Response } from "express";
 import {
   createVault,
@@ -24,17 +23,17 @@ export async function createVaultController(req: Request, res: Response): Promis
     title, 
     description, 
     encryptedSecret, 
-    encryptedAESKey, 
     secretType,
     ipfsHash,
     fileName,
-    fileSize
+    fileSize,
+    trusteeEmail  
   } = req.body;
 
-  if (!userId || !title || !encryptedSecret || !encryptedAESKey) {
+  if (!userId || !title || !encryptedSecret) {
     return res.status(400).send({
       success: false,
-      message: "Fields userId, title, encryptedSecret, and encryptedAESKey are required",
+      message: "Fields userId, title, and encryptedSecret are required",
     });
   }
 
@@ -43,12 +42,12 @@ export async function createVaultController(req: Request, res: Response): Promis
       userId,
       title,
       description,
-      encryptedSecret,
-      encryptedAESKey,
+      encryptedSecret, // Encrypted with recovery password on frontend
       secretType: secretType || SecretType.NOTE,
       ipfsHash,
       fileName,
-      fileSize: fileSize ? parseInt(fileSize) : undefined
+      fileSize: fileSize ? parseInt(fileSize) : undefined,
+      trusteeEmail // Optional trustee
     };
 
     const result = await createVault(vaultData);
@@ -349,18 +348,18 @@ export async function createVaultByWalletController(req: Request, res: Response)
     walletAddress,
     title, 
     description, 
-    encryptedSecret, 
-    encryptedAESKey, 
+    encryptedSecret, // Simplified - no separate AES key
     secretType,
     ipfsHash,
     fileName,
-    fileSize
+    fileSize,
+    trusteeEmail // New trustee field
   } = req.body;
 
-  if (!walletAddress || !title || !encryptedSecret || !encryptedAESKey) {
+  if (!walletAddress || !title || !encryptedSecret) {
     return res.status(400).send({
       success: false,
-      message: "Fields walletAddress, title, encryptedSecret, and encryptedAESKey are required",
+      message: "Fields walletAddress, title, and encryptedSecret are required",
     });
   }
 
@@ -378,12 +377,12 @@ export async function createVaultByWalletController(req: Request, res: Response)
       userId: user.id.toString(),
       title,
       description,
-      encryptedSecret,
-      encryptedAESKey,
+      encryptedSecret, // Already encrypted with recovery password on frontend
       secretType: secretType || SecretType.NOTE,
       ipfsHash,
       fileName,
-      fileSize: fileSize ? parseInt(fileSize) : undefined
+      fileSize: fileSize ? parseInt(fileSize) : undefined,
+      trusteeEmail
     };
 
     const result = await createVault(vaultData);

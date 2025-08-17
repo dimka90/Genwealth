@@ -33,25 +33,20 @@ const limiter = rateLimit({
   }
 });
 app.use(limiter);
-
-// Parsing middleware
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 
-// Logging
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 } else {
   app.use(morgan("combined"));
 }
 
-// Routes
 app.use("/api/vaults", vaultRouter);
 app.use("/api", routes);
 
 
-// Error handling middleware
 app.use(notFound);
 app.use(errorHandler);
 
@@ -59,12 +54,12 @@ app.use(errorHandler);
 async function startServer() {
   try {
     await sequelize.authenticate();
-    console.log("✅ Database connection established successfully.");
+    console.log(" Database connection established successfully.");
 
     app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
-      console.log(`📊 Environment: ${process.env.NODE_ENV || "development"}`);
-      console.log(`🔗 API Health Check: http://localhost:${PORT}/api/health`);
+      console.log(`Server is running on port ${PORT}`);
+      console.log(` Environment: ${process.env.NODE_ENV || "development"}`);
+      console.log(`API Health Check: http://localhost:${PORT}/api/health`);
     });
   } catch (error) {
     console.error("❌ Unable to start server:", error);
