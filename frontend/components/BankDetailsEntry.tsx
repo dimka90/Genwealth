@@ -1,19 +1,23 @@
 "use client";
 import { useState } from "react";
-import { FaLock } from "react-icons/fa";
+import { FaLock, FaCalendarAlt } from "react-icons/fa";
 import { BsBank } from "react-icons/bs";
 
 export default function BankDetailsEntry() {
   const [bankDetails, setBankDetails] = useState({
-    accountNumber: "",
-    routingNumber: "",
+    PIN: "",
     accountName: "",
+    recoveryPeriod: "3" // default to 3 months
   });
 
+  const recoveryOptions = [
+    { value: "1", label: "1 Month" },
+    { value: "3", label: "3 Months" },
+    { value: "6", label: "6 Months" }
+  ];
+
   return (
-    <div
-      className="max-w-md mx-auto p-6 rounded-lg bg-gray-800 text-white"
-    >
+    <div className="max-w-md mx-auto p-6 rounded-lg bg-gray-800 text-white">
       <div className="flex items-center mb-6">
         <BsBank className="text-indigo-500 text-2xl mr-3" />
         <h2 className="text-xl font-bold">Enter Bank Details</h2>
@@ -33,55 +37,61 @@ export default function BankDetailsEntry() {
               setBankDetails({ ...bankDetails, accountName: e.target.value })
             }
             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
+            placeholder="John Doe"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">
-            Account Number
-          </label>
+          <label className="block text-sm font-medium mb-2">PIN</label>
           <input
-            type="text"
-            value={bankDetails.accountNumber}
+            type="password"
+            value={bankDetails.PIN}
             onChange={(e) =>
-              setBankDetails({ ...bankDetails, accountNumber: e.target.value })
+              setBankDetails({ ...bankDetails, PIN: e.target.value })
             }
             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
+            placeholder="••••"
+            maxLength={4}
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Routing Number
+        <div className="pt-2">
+          <label className="flex items-center text-sm font-medium mb-2">
+            <FaCalendarAlt className="text-indigo-400 mr-2" />
+            Recovery After Inactivity
           </label>
-          <input
-            type="text"
-            value={bankDetails.routingNumber}
-            onChange={(e) =>
-              setBankDetails({ ...bankDetails, routingNumber: e.target.value })
-            }
-            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
-          />
+          <div className="grid grid-cols-3 gap-3">
+            {recoveryOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => setBankDetails({...bankDetails, recoveryPeriod: option.value})}
+                className={`py-2 rounded-lg border transition-colors ${
+                  bankDetails.recoveryPeriod === option.value
+                    ? "bg-indigo-500/20 border-indigo-500 text-indigo-400"
+                    : "bg-gray-700 border-gray-600 hover:bg-gray-600"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-gray-400">
+            Trustees will be notified after this period of inactivity
+          </p>
         </div>
 
-        <div className="flex items-center text-sm text-gray-400">
+        <div className="flex items-center text-sm text-gray-400 pt-2">
           <FaLock className="mr-2" />
           <span>End-to-end encrypted</span>
         </div>
 
         <button
           className={`w-full py-3 rounded-lg font-medium transition-colors mt-4 ${
-            bankDetails.accountName &&
-            bankDetails.accountNumber &&
-            bankDetails.routingNumber
+            bankDetails.accountName && bankDetails.PIN
               ? "bg-indigo-500 hover:bg-indigo-600 text-white"
               : "bg-gray-700 text-gray-400 cursor-not-allowed"
           }`}
-          disabled={
-            !bankDetails.accountName ||
-            !bankDetails.accountNumber ||
-            !bankDetails.routingNumber
-          }
+          disabled={!bankDetails.accountName || !bankDetails.PIN}
         >
           Encrypt and Continue
         </button>
