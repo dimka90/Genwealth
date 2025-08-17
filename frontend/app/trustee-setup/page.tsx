@@ -1,5 +1,4 @@
 import ProgressStepper from '@/components/ProgressStepper';
-import CustomCursor from '@/components/CustomCursor';
 import TrusteeSetup from '@/components/TrusteeSetup';
 import { Step } from '@/types/steps';
 
@@ -13,7 +12,6 @@ export default function TrusteeSetupPage() {
 
   return (
     <div className="min-h-screen p-4 mt-20">
-      <CustomCursor />
       <div className="max-w-4xl mx-auto">
         <div className="py-8">
           <ProgressStepper steps={steps} />

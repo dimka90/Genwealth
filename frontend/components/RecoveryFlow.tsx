@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { motion } from 'framer-motion';
 import { FaShieldAlt, FaKey, FaCheckCircle } from 'react-icons/fa';
 
 export default function RecoveryFlow() {
@@ -8,9 +7,7 @@ export default function RecoveryFlow() {
   const [sharesSubmitted, setSharesSubmitted] = useState(0);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <div 
       className="max-w-md mx-auto p-6 rounded-lg bg-gray-800 text-white"
     >
       <div className="flex items-center mb-6">
@@ -110,6 +107,6 @@ export default function RecoveryFlow() {
           </button>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

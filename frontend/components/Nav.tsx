@@ -3,7 +3,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 
-const Navbar = () => {
+const Nav = () => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -35,27 +35,6 @@ const Navbar = () => {
             SecureVault
           </Link>
 
-          {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/features"
-              className="text-gray-300 hover:text-white transition-colors font-medium"
-            >
-              Features
-            </Link>
-            <Link
-              href="/security"
-              className="text-gray-300 hover:text-white transition-colors font-medium"
-            >
-              Security
-            </Link>
-            <Link
-              href="/about"
-              className="text-gray-300 hover:text-white transition-colors font-medium"
-            >
-              About
-            </Link>
-          </div>
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
@@ -63,16 +42,8 @@ const Navbar = () => {
               href="/signin"
               className="text-gray-300 hover:text-white font-medium transition-colors"
             >
-              Sign In
+              wallet address 
             </Link>
-            <div className="inline-block ">
-              <Link
-                href="/signin"
-                className="bg-gradient-to-br from-indigo-700 to-indigo-500 px-6 py-2 rounded-md block transition-all duration-200 hover:from-indigo-600 hover:to-indigo-400 text-sm sm:text-base"
-              >
-                Get Started
-              </Link>
-            </div>
           </div>
 
           {/* Mobile Menu Button */}
@@ -97,4 +68,4 @@ const Navbar = () => {
   );
 };
 
-export default Navbar;
+export default Nav;

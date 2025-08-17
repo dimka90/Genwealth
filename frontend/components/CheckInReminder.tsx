@@ -1,11 +1,8 @@
-// import { motion } from 'framer-motion';
 import { FaCalendarCheck, FaBell } from 'react-icons/fa';
 
 export default function CheckInReminder() {
   return (
     <div 
-      // initial={{ opacity: 0 }}
-      // animate={{ opacity: 1 }}
       className="max-w-md mx-auto p-6 rounded-lg bg-gray-800 text-white"
     >
       <div className="flex items-center mb-6">

@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { FaLock } from 'react-icons/fa';
 
 interface EncryptedBadgeProps {
@@ -19,13 +18,11 @@ export default function EncryptedBadge({
   };
 
   return (
-    <motion.span
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
+    <span
       className={`inline-flex items-center rounded-full bg-indigo-500/20 text-indigo-300 ${sizeClasses[size]} ${className}`}
     >
       <FaLock className={`mr-1.5 ${size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-base'}`} />
       {text}
-    </motion.span>
+    </span>
   );
 }

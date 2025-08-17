@@ -1,7 +1,6 @@
 import ProgressStepper from '@/components/ProgressStepper';
 import DocumentUpload from '@/components/DocumentUpload';
 import DocumentList from '@/components/DocumentList';
-import CustomCursor from '@/components/CustomCursor';
 import { Step } from '@/types/steps';
 
 export default function DocumentUploadPage() {
@@ -14,7 +13,6 @@ export default function DocumentUploadPage() {
 
   return (
     <div className="min-h-screen mt-20 p-4">
-      <CustomCursor />
       <div className="max-w-4xl mx-auto">
         <div className="py-8">
           <ProgressStepper steps={steps} />

@@ -1,6 +1,5 @@
 import ProgressStepper from '@/components/ProgressStepper';
 import CheckInReminder from '@/components/CheckInReminder';
-import CustomCursor from '@/components/CustomCursor';
 import { Step } from '@/types/steps';
 
 export default function CheckInPage() {
@@ -13,7 +12,6 @@ export default function CheckInPage() {
 
   return (
     <div className="min-h-screen mt-20 text-white p-4">
-      <CustomCursor />
       <div className="max-w-4xl mx-auto">
         <div className="py-8">
           <ProgressStepper steps={steps} />

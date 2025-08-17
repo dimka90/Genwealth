@@ -1,6 +1,5 @@
 'use client';
 import { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { FaUpload, FaFile, FaSpinner } from 'react-icons/fa';
 
 export default function DocumentUpload() {
@@ -18,9 +17,7 @@ export default function DocumentUpload() {
   }, [uploadedFile]);
 
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <div 
       className="max-w-md mx-auto p-6 rounded-lg bg-gray-800 text-white"
     >
       <div className="flex items-center mb-6">
@@ -76,6 +73,6 @@ export default function DocumentUpload() {
           'Upload and Store CID'
         )}
       </button>
-    </motion.div>
+    </div>
   );
 }

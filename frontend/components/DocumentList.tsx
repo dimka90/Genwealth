@@ -1,4 +1,3 @@
-import { motion } from 'framer-motion';
 import { FaFile, FaTrash, FaDownload, FaLink } from 'react-icons/fa';
 
 const documents = [
@@ -8,9 +7,7 @@ const documents = [
 
 export default function DocumentList() {
   return (
-    <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <div 
       className="max-w-2xl mx-auto p-6 rounded-lg bg-gray-800 text-white"
     >
       <h2 className="text-xl font-bold mb-6">Your Documents</h2>
@@ -49,6 +46,6 @@ export default function DocumentList() {
           </div>
         ))}
       </div>
-    </motion.div>
+    </div>
   );
 }

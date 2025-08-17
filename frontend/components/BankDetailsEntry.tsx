@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { FaLock } from "react-icons/fa";
 import { BsBank } from "react-icons/bs";
 
@@ -12,9 +11,7 @@ export default function BankDetailsEntry() {
   });
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <div
       className="max-w-md mx-auto p-6 rounded-lg bg-gray-800 text-white"
     >
       <div className="flex items-center mb-6">
@@ -89,6 +86,6 @@ export default function BankDetailsEntry() {
           Encrypt and Continue
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }

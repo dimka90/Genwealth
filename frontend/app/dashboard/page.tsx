@@ -1,4 +1,3 @@
-import CustomCursor from '@/components/CustomCursor';
 import { FaBox, FaShieldAlt, FaClock, FaFile } from 'react-icons/fa';
 
 export default function Dashboard() {
@@ -11,7 +10,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen mt-20 p-4">
-      <CustomCursor />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold mb-8">Dashboard</h1>
         

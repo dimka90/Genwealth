@@ -1,4 +1,3 @@
-import CustomCursor from '@/components/CustomCursor';
 import PrivySignIn from '@/components/PrivySignIn';
 import ProgressStepper from '@/components/ProgressStepper';
 import { Step } from '@/types/steps';
@@ -13,7 +12,6 @@ export default function SignInPage() {
 
   return (
     <div className="min-h-screen p-4 mt-20">
-      <CustomCursor />
       <div className="max-w-4xl mx-auto">
         <div className="py-8">
           <ProgressStepper steps={steps} />
