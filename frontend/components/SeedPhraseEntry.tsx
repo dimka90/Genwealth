@@ -56,6 +56,31 @@ export default function SeedPhraseEntry() {
             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium mb-2">
+           Title
+          </label>
+          <input
+            // rows={3}
+            type="text"
+            // value={confirmSeedPhrase}
+            // onChange={(e) => setConfirmSeedPhrase(e.target.value)}
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
+          />
+        </div>
+
+         <div>
+          <label className="block text-sm font-medium mb-2">
+           Description
+          </label>
+          <input
+            // rows={3}
+            type="text"
+            // value={confirmSeedPhrase}
+            // onChange={(e) => setConfirmSeedPhrase(e.target.value)}
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
+          />
+        </div>
 
         <div className="flex items-center text-sm text-gray-400">
           <FaLock className="mr-2" />
