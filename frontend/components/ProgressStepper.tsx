@@ -1,12 +1,20 @@
 import { FaCheck, FaCircle } from 'react-icons/fa';
 
-type Step = {
+// Define the type for step status
+type StepStatus = 'complete' | 'current' | 'upcoming';
+
+// Define the Step interface with strict status typing
+interface Step {
   id: string;
   name: string;
-  status: 'complete' | 'current' | 'upcoming';
-};
+  status: StepStatus; // Now only these 3 strings are allowed
+}
 
-export default function ProgressStepper({ steps }: { steps: Step[] }) {
+interface ProgressStepperProps {
+  steps: Step[];
+}
+
+export default function ProgressStepper({ steps }: ProgressStepperProps) {
   return (
     <nav className="flex items-center justify-center">
       <ol className="flex items-center space-x-8">

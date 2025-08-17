@@ -1,11 +1,11 @@
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 import { FaEnvelope, FaWallet } from 'react-icons/fa';
 
 export default function PrivySignIn() {
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div 
+      // initial={{ opacity: 0, y: 20 }}
+      // animate={{ opacity: 1, y: 0 }}
       className="max-w-md mx-auto p-6 rounded-lg bg-gray-800 text-white"
     >
       <div className="flex items-center mb-6">
@@ -31,6 +31,6 @@ export default function PrivySignIn() {
           Continue with Email
         </button>
       </div>
-    </motion.div>
+    </div>
   );
 }
