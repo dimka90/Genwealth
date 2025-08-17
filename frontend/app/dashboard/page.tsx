@@ -10,7 +10,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen text-white p-4">
+    <div className="min-h-screen mt-20 p-4">
       <CustomCursor />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-2xl font-bold mb-8">Dashboard</h1>

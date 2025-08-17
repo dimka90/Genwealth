@@ -12,7 +12,7 @@ export default function TrusteeSetupPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
+    <div className="min-h-screen p-4 mt-20">
       <CustomCursor />
       <div className="max-w-4xl mx-auto">
         <div className="py-8">

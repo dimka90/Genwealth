@@ -13,7 +13,7 @@ export default function DocumentUploadPage() {
   ];
 
   return (
-    <div className="min-h-screen text-white p-4">
+    <div className="min-h-screen mt-20 p-4">
       <CustomCursor />
       <div className="max-w-4xl mx-auto">
         <div className="py-8">

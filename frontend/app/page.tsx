@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <div className="">
       <CustomCursor />
-      <Navbar />
+      {/* <Navbar /> */}
       <Hero />
       <HowTo />
     </div>
