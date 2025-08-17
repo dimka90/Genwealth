@@ -1,6 +1,6 @@
 import PrivySignIn from '@/components/PrivySignIn';
 // import ProgressStepper from '@/components/ProgressStepper';
-import { Step } from '@/types/steps';
+// import { Step } from '@/types/steps';
 
 export default function SignInPage() {
   // const steps: Step[] = [ 

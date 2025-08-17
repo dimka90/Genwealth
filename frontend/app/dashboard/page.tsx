@@ -54,24 +54,17 @@ export default function Dashboard() {
             </button>
           </div>
           
-          <div className="bg-gray-800 rounded-lg p-6">
+          <div className="bg-gray-800 rounded-lg p-6 flex flex-col justify-between">
             <h2 className="text-lg font-bold mb-4 flex items-center">
               <FaShieldAlt className="text-indigo-400 mr-2" />
-              Recovery Status
+              Recovery
             </h2>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-gray-300">Trustee 1</span>
                 <span className="text-green-400 text-sm">Active</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-300">Trustee 2</span>
-                <span className="text-green-400 text-sm">Active</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-300">Trustee 3</span>
-                <span className="text-yellow-400 text-sm">Pending Confirmation</span>
-              </div>
+            
             </div>
             <button className="w-full mt-4 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg font-medium transition-colors">
               Manage Trustees
