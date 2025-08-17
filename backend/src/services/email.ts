@@ -67,7 +67,7 @@ class EmailService {
             <p>The vault owner has been inactive and has requested that their digital assets be made accessible through the recovery process.</p>
             
             <div class="recovery-box">
-                <h3>📋 Recovery Details:</h3>
+                <h3>Recovery Details:</h3>
                 <ul>
                     <li><strong>Vault:</strong> ${vaultTitle}</li>
                     <li><strong>Owner:</strong> ${ownerEmail}</li>
@@ -97,7 +97,7 @@ class EmailService {
     await this.transporter.sendMail({
       from: process.env.FROM_EMAIL || 'noreply@digitalinheritance.com',
       to: trusteeEmail,
-      subject: `🔐 Recovery Access Needed - ${vaultTitle}`,
+      subject: ` Recovery Access Needed - ${vaultTitle}`,
       html: emailTemplate,
       text: `Digital Inheritance Recovery Request
       
@@ -134,7 +134,7 @@ If you did not expect this email, please contact support.`
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚠️ Account Activity Warning</h1>
+            <h1>Account Activity Warning</h1>
         </div>
         
         <div class="content">
@@ -143,12 +143,12 @@ If you did not expect this email, please contact support.`
             <p>We noticed that you haven't logged into your Digital Inheritance account for <strong>${daysSinceLastLogin} days</strong>.</p>
             
             <div class="warning-box">
-                <h3>🚨 Important Notice:</h3>
+                <h3>Important Notice:</h3>
                 <p>If you remain inactive for <strong>${warningThreshold} more days</strong>, the recovery process will be initiated for your protected vaults.</p>
                 <p>Your ${trusteesCount} designated trustee(s) will be notified and given access to your digital inheritance.</p>
             </div>
             
-            <h3>🔐 What this means:</h3>
+            <h3>What this means:</h3>
             <ul>
                 <li>Your digital assets remain secure</li>
                 <li>Trustees cannot access your vaults yet</li>
@@ -156,11 +156,11 @@ If you did not expect this email, please contact support.`
                 <li>This is working as designed for your protection</li>
             </ul>
             
-            <h3>✅ To prevent recovery initiation:</h3>
+            <h3> To prevent recovery initiation:</h3>
             <p>Simply log into your account to reset the inactivity timer.</p>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.FRONTEND_URL}/login" class="action-button">🔐 Log Into My Account</a>
+                <a href="${process.env.FRONTEND_URL}/login" class="action-button"> Log Into My Account</a>
             </div>
             
             <p><strong>Was this intentional?</strong> If you're planning to be away, you can adjust your inactivity settings in your account preferences.</p>
@@ -178,7 +178,7 @@ If you did not expect this email, please contact support.`
     await this.transporter.sendMail({
       from: process.env.FROM_EMAIL || 'noreply@digitalinheritance.com',
       to: ownerEmail,
-      subject: `⚠️ Account Activity Warning - ${daysSinceLastLogin} days inactive`,
+      subject: ` Account Activity Warning - ${daysSinceLastLogin} days inactive`,
       html: emailTemplate,
       text: `Digital Inheritance - Account Activity Warning
 
@@ -194,12 +194,12 @@ This is working as designed for your digital inheritance protection.`
 
   async sendRecoveryCompleteNotification(ownerEmail: string, vaultTitle: string, trusteeEmail: string): Promise<void> {
     await this.transporter.sendMail({
-      from: process.env.FROM_EMAIL || 'noreply@digitalinheritance.com',
+      from: 'Secure Vault <securevault@gmail.com>',
       to: ownerEmail,
       subject: `✅ Recovery Completed - ${vaultTitle}`,
       html: `
 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-    <h2>🔐 Digital Inheritance Recovery Completed</h2>
+    <h2> Digital Inheritance Recovery Completed</h2>
     <p>This is to notify you that recovery has been completed for your vault: <strong>"${vaultTitle}"</strong></p>
     <p>Recovery was successfully completed by: ${trusteeEmail}</p>
     <p>If this was unexpected, please contact support immediately.</p>
