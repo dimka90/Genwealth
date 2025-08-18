@@ -3,7 +3,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import WalletAddress from "./WalletAddress";
-// import LogoutButton from "./LogOut";
+import LogoutButton from "./LogOut";
 
 
 const Nav = () => {
@@ -42,7 +42,7 @@ const Nav = () => {
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
            <WalletAddress />
-           {/* <LogoutButton /> */}
+           <LogoutButton />
           </div>
 
           {/* Mobile Menu Button */}

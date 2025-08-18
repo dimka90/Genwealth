@@ -8,7 +8,7 @@ export default function LogoutButton() {
 
   return (
     <button
-      onClick={logout}
+      onClick={() => logout()} 
       className="inline-flex items-center gap-2 px-4 py-2 text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
     >
       <LogOut size={18} />
