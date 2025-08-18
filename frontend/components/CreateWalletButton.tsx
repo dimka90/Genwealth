@@ -4,12 +4,12 @@ import { FaWallet, FaSpinner, FaCheckCircle, FaExclamationTriangle } from "react
 import { motion, AnimatePresence } from "framer-motion";
 import { useCreateWallet } from '@privy-io/react-auth';
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation"; // ✅ import router
+import { useRouter } from "next/navigation"; 
 
 export default function CreateWalletButton() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const { createWallet } = useCreateWallet();
-  const router = useRouter(); // ✅ init router
+  const router = useRouter(); 
 
   const handleClick = async () => {
     setStatus('loading');
@@ -21,7 +21,7 @@ export default function CreateWalletButton() {
 
       // ✅ Redirect after small delay (optional)
       setTimeout(() => {
-        router.push("/account-creation");
+        router.push("/dashboard");
       }, 1200);
     } catch (err) {
       setStatus('error');

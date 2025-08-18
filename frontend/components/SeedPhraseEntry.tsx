@@ -11,7 +11,7 @@ export default function SeedPhraseEntry() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-md mx-auto p-6 rounded-lg bg-gray-800 text-white"
+      className="max-w-xl mx-auto p-6 rounded-lg bg-gray-800 text-white mt-20"
     >
       <div className="flex items-center mb-6">
         <FaKey className="text-indigo-500 text-2xl mr-3" />
@@ -34,10 +34,10 @@ export default function SeedPhraseEntry() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2">PIN</label>
+          <label className="block text-sm font-medium mb-2">Recorvery PIN</label>
           <input
             // rows={3}
-            type="number"
+            type="password"
             // value={confirmSeedPhrase}
             // onChange={(e) => setConfirmSeedPhrase(e.target.value)}
             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"

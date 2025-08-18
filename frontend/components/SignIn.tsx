@@ -4,14 +4,16 @@ import { FaEnvelope, FaWallet, FaArrowRight, FaCheck } from "react-icons/fa";
 import { useLoginWithEmail } from "@privy-io/react-auth";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
-import CreateWalletButton from "./CreateWalletButton";
+// import CreateWalletButton from "./CreateWalletButton";
+import { useRouter } from "next/navigation";
 
-export default function PrivySignIn() {
+export default function SignIn() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
   const [isLoading, setIsLoading] = useState(false);
   const { sendCode, loginWithCode } = useLoginWithEmail();
+  const router = useRouter();
 
   const handleSendCode = async () => {
     setIsLoading(true);
@@ -21,6 +23,7 @@ export default function PrivySignIn() {
       setStep("code");
     } catch (err) {
       toast.error("Failed to send verification code. Please try again.");
+      console.log(err);
     } finally {
       setIsLoading(false);
     }
@@ -31,8 +34,12 @@ export default function PrivySignIn() {
     try {
       await loginWithCode({ code });
       toast.success("Successfully signed in!");
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 1200);
     } catch (err) {
       toast.error("Invalid verification code. Please try again.");
+      console.log(err);
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +57,7 @@ export default function PrivySignIn() {
           },
         }}
       />
-      
+
       <div className="flex items-center mb-6">
         <FaWallet className="text-indigo-500 text-2xl mr-3" />
         <h2 className="text-xl font-bold">
@@ -67,9 +74,7 @@ export default function PrivySignIn() {
             exit={{ opacity: 0, x: 10 }}
             transition={{ duration: 0.2 }}
           >
-            <p className="mb-6 text-gray-300">
-              Enter your email to sign in. Privy will create a wallet for you.
-            </p>
+            <p className="mb-6 text-gray-300">Enter your email to sign in.</p>
 
             <div className="space-y-4">
               <div className="flex items-center border border-gray-600 rounded-lg px-4 py-3">
@@ -115,8 +120,9 @@ export default function PrivySignIn() {
             transition={{ duration: 0.2 }}
           >
             <p className="mb-6 text-gray-300">
-              We sent a 6-digit code to <span className="text-white font-medium">{email}</span>.
-              Please enter it below to verify your email.
+              We sent a 6-digit code to{" "}
+              <span className="text-white font-medium">{email}</span>. Please
+              enter it below to verify your email.
             </p>
 
             <div className="space-y-4">
@@ -125,7 +131,9 @@ export default function PrivySignIn() {
                   type="text"
                   placeholder="123456"
                   className="bg-transparent flex-1 outline-none text-white text-center text-2xl tracking-widest"
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onChange={(e) =>
+                    setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                  }
                   value={code}
                 />
               </div>
@@ -163,9 +171,8 @@ export default function PrivySignIn() {
                     </>
                   )}
                 </button>
-           
               </div>
-                   <CreateWalletButton />
+              {/* <CreateWalletButton /> */}
             </div>
           </motion.div>
         )}

@@ -1,5 +1,5 @@
 import "./globals.css";
-import Nav from "@/components/Nav";
+// import Nav from "@/components/Nav";
 import { Providers } from "@/providers/PrivyProviders";
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
       <body>
         <Providers>
           {" "}
-          <Nav />
+          {/* <Nav /> */}
           {children}
         </Providers>
       </body>

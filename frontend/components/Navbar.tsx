@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import WalletAddress from "./WalletAddress";
+
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -16,9 +18,9 @@ const Navbar = () => {
 
   return (
     <motion.nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 pt-5 ${
         scrolled
-          ? "bg-black/90 backdrop-blur-lg border-b border-gray-800/50"
+          ? "bg-gray-900 backdrop-blur-lg"
           : "bg-transparent"
       }`}
       initial={{ y: -100 }}
@@ -35,44 +37,13 @@ const Navbar = () => {
             SecureVault
           </Link>
 
-          {/* Navigation Links */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link
-              href="/features"
-              className="text-gray-300 hover:text-white transition-colors font-medium"
-            >
-              Features
-            </Link>
-            <Link
-              href="/security"
-              className="text-gray-300 hover:text-white transition-colors font-medium"
-            >
-              Security
-            </Link>
-            <Link
-              href="/about"
-              className="text-gray-300 hover:text-white transition-colors font-medium"
-            >
-              About
-            </Link>
-          </div>
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-            <Link
-              href="/signin"
-              className="text-gray-300 hover:text-white font-medium transition-colors"
-            >
-              Sign In
-            </Link>
-            <div className="inline-block ">
-              <Link
-                href="/signin"
-                className="bg-gradient-to-br from-indigo-700 to-indigo-500 px-6 py-2 rounded-md block transition-all duration-200 hover:from-indigo-600 hover:to-indigo-400 text-sm sm:text-base"
-              >
-                Get Started
-              </Link>
-            </div>
+           <WalletAddress />
+           <div>
+            <Link href='/signin'>Sign In</Link>
+           </div>
           </div>
 
           {/* Mobile Menu Button */}

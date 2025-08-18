@@ -26,12 +26,12 @@ export default function WalletAddress() {
           return (
             <div
               key={addr}
-              className="relative flex items-center gap-2 px-3 py-2 bg-inidg0-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+              className="relative flex items-center gap-2 px-3 py-2 bg-inidg0-500 border border-gray-200 rounded-lg hover:bg-gray-700 transition-colors duration-200"
             >
               <Wallet size={16} className="text-gray-200" />
-              <span className="font-mono text-sm text-gray-800">{short}</span>
+              <span className="font-mono text-sm text-gray-200">{short}</span>
               <button
-                className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-200 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+                className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-gray-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(addr);

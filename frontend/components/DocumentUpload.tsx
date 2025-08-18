@@ -33,7 +33,7 @@ export default function DocumentUpload() {
   }, [uploadedFile, pin, trusteeEmail, recoveryPeriod]);
 
   return (
-    <div className="max-w-md mx-auto p-6 rounded-lg bg-gray-800 text-white">
+    <div className="max-w-xl mx-auto p-6 rounded-lg bg-gray-800 text-white mt-20">
       <div className="flex items-center mb-6">
         <FaUpload className="text-indigo-500 text-2xl mr-3" />
         <h2 className="text-xl font-bold">Upload Document</h2>
@@ -79,7 +79,7 @@ export default function DocumentUpload() {
 
       <div className="mt-5 space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2">PIN</label>
+          <label className="block text-sm font-medium mb-2">Recovery PIN</label>
           <input
             type="password"
             value={pin}
