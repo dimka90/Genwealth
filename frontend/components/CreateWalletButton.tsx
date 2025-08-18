@@ -22,7 +22,7 @@ export default function CreateWalletButton() {
       // ✅ Redirect after small delay (optional)
       setTimeout(() => {
         router.push("/account-creation");
-      }, 3000);
+      }, 1200);
     } catch (err) {
       setStatus('error');
       toast.error("Failed to create wallet");
