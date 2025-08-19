@@ -4,7 +4,7 @@ import { FaEnvelope, FaWallet, FaArrowRight, FaCheck } from "react-icons/fa";
 import { useLoginWithEmail } from "@privy-io/react-auth";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
-import CreateWalletButton from "./CreateWalletButton";
+import CreateWalletButton from "../Wallet/CreateWalletButton";
 
 export default function PrivySignIn() {
   const [email, setEmail] = useState("");

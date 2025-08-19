@@ -8,7 +8,7 @@ const documents = [
 export default function DocumentList() {
   return (
     <div 
-      className="max-w-2xl mx-auto p-6 rounded-lg bg-gray-800 text-white"
+      className="max-w-6xl mx-auto p-6 rounded-lg bg-gray-800 text-white"
     >
       <h2 className="text-xl font-bold mb-6">Your Documents</h2>
       

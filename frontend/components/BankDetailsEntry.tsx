@@ -17,7 +17,7 @@ export default function BankDetailsEntry() {
   ];
 
   return (
-    <div className="max-w-xl mx-auto p-6 rounded-lg bg-gray-800 text-white mt-20">
+    <div className="max-w-6xl mx-auto p-6 rounded-lg bg-gray-800 text-white mt-20">
       <div className="flex items-center mb-6">
         <BsBank className="text-indigo-500 text-2xl mr-3" />
         <h2 className="text-xl font-bold">Enter Bank Details</h2>

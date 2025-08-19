@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import PrivySignIn from "@/components/PrivySignIn";
+import PrivySignIn from "@/components/SignInFlow/PrivySignIn";
 // import ProgressStepper from '@/components/ProgressStepper';
 // import { Step } from '@/types/steps';
 

@@ -2,8 +2,8 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import WalletAddress from "./WalletAddress";
-import LogoutButton from "./LogOut";
+import WalletAddress from "./Wallet/WalletAddress";
+import LogoutButton from "./Wallet/LogOut";
 
 
 const Nav = () => {

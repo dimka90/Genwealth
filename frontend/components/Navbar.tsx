@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import WalletAddress from "./WalletAddress";
+import WalletAddress from "./Wallet/WalletAddress";
 
 
 const Navbar = () => {
@@ -40,9 +40,11 @@ const Navbar = () => {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center space-x-4">
-           <WalletAddress />
            <div>
-            <Link href='/signin'>Sign In</Link>
+            <Link href='/signup' className="bg-indigo-500 px-4 py-2 rounded-lg text-sm hover:bg-indigo-600">Unlock</Link>
+           </div>
+           <div>
+            <Link href='/signin' className="border border-indigo-500 px-4 py-2 rounded-lg text-sm hover:bg-gray-600/50">Sign In</Link>
            </div>
           </div>
 

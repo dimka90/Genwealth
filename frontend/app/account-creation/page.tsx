@@ -4,7 +4,7 @@ import { useState } from "react";
 import SeedPhraseEntry from "@/components/SeedPhraseEntry";
 import BankDetailsEntry from "@/components/BankDetailsEntry";
 // import { Step } from "@/types/steps";
-import DocumentUpload from "@/components/DocumentUpload";
+import DocumentUpload from "@/components/Documents/DocumentUpload";
 
 export default function AccountCreation() {
   const [activeTab, setActiveTab] = useState<"seed" | "bank" | "documents">(

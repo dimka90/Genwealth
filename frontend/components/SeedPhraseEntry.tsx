@@ -67,7 +67,7 @@ export default function SeedPhraseEntry() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="max-w-xl mx-auto p-6 rounded-lg bg-gray-800 text-white mt-20"
+      className="max-w-6xl mx-auto p-6 rounded-lg bg-gray-800 text-white mt-20"
     >
       <div className="flex items-center mb-6">
         <FaKey className="text-indigo-500 text-2xl mr-3" />

@@ -1,6 +1,6 @@
 import Navbar from '@/components/Navbar';
-import PrivySignIn from '@/components/PrivySignIn';
-import SignIn from '@/components/SignIn';
+import PrivySignIn from '@/components/SignInFlow/PrivySignIn';
+import SignIn from '@/components/SignInFlow/SignIn';
 // import ProgressStepper from '@/components/ProgressStepper';
 // import { Step } from '@/types/steps';
 
