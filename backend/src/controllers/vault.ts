@@ -15,9 +15,15 @@ import {
   UpdateVaultData
 } from "../db/vault";
 import { SecretType } from "../model/vault";
-import { getUserById, getUserByWalletAddress } from "../db/user";
+import {  getUserByWalletAddress } from "../db/user";
+import { createTrusteeAccess } from "../db/trusteeAccess";
+import emailService from "../services/email";
+import { getUserById as fetchUserById } from "../db/user";
+
+
 
 export async function createVaultController(req: Request, res: Response): Promise<Response> {
+
   const { 
     userId, 
     title, 
@@ -27,35 +33,78 @@ export async function createVaultController(req: Request, res: Response): Promis
     ipfsHash,
     fileName,
     fileSize,
-    trusteeEmail  
+    trusteeEmail,
+    recoveryPassword  
   } = req.body;
 
-  if (!userId || !title || !encryptedSecret) {
+  console.log("I am doing great")
+  if (!userId || !title || !encryptedSecret || !recoveryPassword || !trusteeEmail) {
     return res.status(400).send({
       success: false,
-      message: "Fields userId, title, and encryptedSecret are required",
+      message: "Fields userId, title, encryptedSecret, recoveryPassword, and trusteeEmail are required",
     });
   }
 
   try {
+    // Get user info for email
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Create the main vault
     const vaultData: CreateVaultData = {
       userId,
       title,
       description,
-      encryptedSecret, // Encrypted with recovery password on frontend
+      encryptedSecret,
       secretType: secretType || SecretType.NOTE,
       ipfsHash,
       fileName,
       fileSize: fileSize ? parseInt(fileSize) : undefined,
-      trusteeEmail // Optional trustee
+      trusteeEmail
     };
 
-    const result = await createVault(vaultData);
+    const vault = await createVault(vaultData);
+
+    console.log("Vault created successfully:", vault.id);
+    let trusteeVaultId = null;
+
+    // Create trustee access if trustee email and recovery password provided
+    if (trusteeEmail && recoveryPassword) {
+      const trusteeAccess = await createTrusteeAccess({
+        originalVaultId: parseInt(vault.id, 10),
+        trusteeEmail,
+        recoveryPassword
+      });
+
+      console.log("Trustee access created successfully:", trusteeAccess.trusteeVaultId);    
+      trusteeVaultId = trusteeAccess.trusteeVaultId;
+
+      // Send trustee designation email
+      if (process.env.NODE_ENV !== "test") {
+        await emailService.sendTrusteeDesignationEmail({
+          trusteeEmail,
+          ownerEmail: user.email,
+          ownerName: user.email.split('@')[0],
+          vaultTitle: vault.title,
+          trusteeVaultId: trusteeVaultId,
+          inactivityMonths: user.inactivityMonths
+        });
+      }
+    }
 
     return res.status(201).send({
       success: true,
-      message: "Successfully created new vault",
-      data: result,
+      message: "Successfully created new vault" + (trusteeEmail ? " and notified trustee" : ""),
+      data: {
+        vault: vault,
+        trusteeVaultId: trusteeVaultId,
+        trusteeNotified: !!trusteeEmail
+      },
     });
   } catch (error: any) {
     return res.status(400).send({
@@ -64,6 +113,8 @@ export async function createVaultController(req: Request, res: Response): Promis
     });
   }
 }
+
+
 
 export async function getVaultController(req: Request, res: Response): Promise<Response> {
   const { id } = req.params;
@@ -398,4 +449,16 @@ export async function createVaultByWalletController(req: Request, res: Response)
       message: `Error: ${error.message}`,
     });
   }
+}
+async function getUserById(userId: string) {
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  const user = await fetchUserById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
 }
