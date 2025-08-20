@@ -13,12 +13,13 @@ import routes from "./routes";
 import sequelize from "./config/sequelize";
 import vaultRouter from "./routes/vault";
 import trusteeRouter from "./routes/trusteeRecovery";
+import CronScheduler from "./services/cronSchedular";
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(helmet());
+app.use(helmet()); 
 app.use(cors({
   origin: ["http://example.com", "http://anotherdomain.com"],
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -27,7 +28,7 @@ app.use(cors({
 }));
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 15 * 60 * 1000, 
   max: 100, 
   message: {
     success: false,
@@ -53,7 +54,6 @@ app.use("/api", routes);
 app.use(notFound);
 app.use(errorHandler);
 
-// Start server
 async function startServer() {
   try {
     await sequelize.authenticate();
@@ -63,9 +63,10 @@ async function startServer() {
       console.log(`Server is running on port ${PORT}`);
       console.log(` Environment: ${process.env.NODE_ENV || "development"}`);
       console.log(`API Health Check: http://localhost:${PORT}/api/health`);
+      CronScheduler.startScheduler();
     });
   } catch (error) {
-    console.error("❌ Unable to start server:", error);
+    console.error("Unable to start server:", error);
     process.exit(1);
   }
 }
@@ -78,5 +79,19 @@ process.on("uncaughtException", (err: Error) => {
   console.error("Uncaught Exception:", err);
   process.exit(1);
 });
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  CronScheduler.stopScheduler();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  CronScheduler.stopScheduler();
+  process.exit(0);
+});
+
+
+
 
 startServer();

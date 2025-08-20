@@ -302,6 +302,46 @@ If you have questions, contact ${ownerEmail} directly.`
     });
   }
 
+  async sendRecoveryAvailableNotification({
+  trusteeEmail,
+  ownerEmail,
+  ownerName,
+  vaultTitle,
+  trusteeVaultId,
+  daysSinceLastLogin
+}: {
+  trusteeEmail: string;
+  ownerEmail: string;
+  ownerName: string;
+  vaultTitle: string;
+  trusteeVaultId: string;
+  daysSinceLastLogin: number;
+}) {
+  const subject = `Recovery Available - ${vaultTitle}`;
+  const html = `
+    <h2>Vault Recovery is Now Available</h2>
+    <p>Hello,</p>
+    <p>You have been designated as a trustee for a digital vault belonging to <strong>${ownerName}</strong> (${ownerEmail}).</p>
+    <p>The vault owner has been inactive for <strong>${daysSinceLastLogin} days</strong>, and recovery is now available.</p>
+    
+    <h3>Vault Details:</h3>
+    <ul>
+      <li><strong>Vault:</strong> ${vaultTitle}</li>
+      <li><strong>Trustee Vault ID:</strong> ${trusteeVaultId}</li>
+    </ul>
+    
+    <p>To recover this vault, please visit the recovery portal and use your Trustee Vault ID.</p>
+    <p><strong>Important:</strong> You will need the recovery password that was shared with you when you were designated as trustee.</p>
+  `;
+
+  await this.transporter.sendMail({
+    from: process.env.FROM_EMAIL || 'noreply@digitalinheritance.com',
+    to: trusteeEmail,
+    subject: subject,
+    html: html
+  });
+}
+
   // NEW: Send recovery available notification to trustee
   async sendRecoveryAvailableEmail(data: RecoveryAvailableEmailData): Promise<void> {
     const { trusteeEmail, ownerName, ownerEmail, vaultTitle, trusteeVaultId } = data;
@@ -547,5 +587,8 @@ If this was unexpected, please contact support immediately.`
     });
   }
 }
+
+
+
 
 export default new EmailService();
