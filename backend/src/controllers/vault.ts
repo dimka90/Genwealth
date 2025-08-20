@@ -21,56 +21,9 @@ import emailService from "../services/email";
 import { getUserById as fetchUserById } from "../db/user";
 
 
-// export async function createVaultController(req: Request, res: Response): Promise<Response> {
-//   const { 
-//     userId, 
-//     title, 
-//     description, 
-//     encryptedSecret, 
-//     secretType,
-//     ipfsHash,
-//     fileName,
-//     fileSize,
-//     trusteeEmail  
-//   } = req.body;
-
-//   if (!userId || !title || !encryptedSecret) {
-//     return res.status(400).send({
-//       success: false,
-//       message: "Fields userId, title, and encryptedSecret are required",
-//     });
-//   }
-
-//   try {
-//     const vaultData: CreateVaultData = {
-//       userId,
-//       title,
-//       description,
-//       encryptedSecret, // Encrypted with recovery password on frontend
-//       secretType: secretType || SecretType.NOTE,
-//       ipfsHash,
-//       fileName,
-//       fileSize: fileSize ? parseInt(fileSize) : undefined,
-//       trusteeEmail // Optional trustee
-//     };
-
-//     const result = await createVault(vaultData);
-
-//     return res.status(201).send({
-//       success: true,
-//       message: "Successfully created new vault",
-//       data: result,
-//     });
-//   } catch (error: any) {
-//     return res.status(400).send({
-//       success: false,
-//       message: `Error: ${error.message}`,
-//     });
-//   }
-// }
-
 
 export async function createVaultController(req: Request, res: Response): Promise<Response> {
+
   const { 
     userId, 
     title, 
@@ -81,13 +34,14 @@ export async function createVaultController(req: Request, res: Response): Promis
     fileName,
     fileSize,
     trusteeEmail,
-    recoveryPassword  // NEW: Recovery password for trustee access
+    recoveryPassword  
   } = req.body;
 
-  if (!userId || !title || !encryptedSecret) {
+  console.log("I am doing great")
+  if (!userId || !title || !encryptedSecret || !recoveryPassword || !trusteeEmail) {
     return res.status(400).send({
       success: false,
-      message: "Fields userId, title, and encryptedSecret are required",
+      message: "Fields userId, title, encryptedSecret, recoveryPassword, and trusteeEmail are required",
     });
   }
 
@@ -115,6 +69,8 @@ export async function createVaultController(req: Request, res: Response): Promis
     };
 
     const vault = await createVault(vaultData);
+
+    console.log("Vault created successfully:", vault.id);
     let trusteeVaultId = null;
 
     // Create trustee access if trustee email and recovery password provided
@@ -125,6 +81,7 @@ export async function createVaultController(req: Request, res: Response): Promis
         recoveryPassword
       });
 
+      console.log("Trustee access created successfully:", trusteeAccess.trusteeVaultId);    
       trusteeVaultId = trusteeAccess.trusteeVaultId;
 
       // Send trustee designation email

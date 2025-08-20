@@ -12,6 +12,7 @@ import { notFound } from "./middleware/errorHandler";
 import routes from "./routes"; 
 import sequelize from "./config/sequelize";
 import vaultRouter from "./routes/vault";
+import trusteeRouter from "./routes/trusteeRecovery";
 dotenv.config();
 
 const app = express();
@@ -45,7 +46,9 @@ if (process.env.NODE_ENV === "development") {
 }
 app.use("/api/recovery", vaultRecoveryRouter);
 app.use("/api/vaults", vaultRouter);
+app.use("/api/trustee-recovery", trusteeRouter);
 app.use("/api", routes);
+
 
 app.use(notFound);
 app.use(errorHandler);

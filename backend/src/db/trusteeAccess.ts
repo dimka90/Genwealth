@@ -2,7 +2,6 @@
 import TrusteeAccess from "../model/trusteeAccess";
 import Vault from "../model/vault";
 import User from "../model/user";
-import { Op } from "sequelize";
 
 export interface CreateTrusteeAccessData {
   originalVaultId: number;
@@ -12,9 +11,14 @@ export interface CreateTrusteeAccessData {
 
 export async function createTrusteeAccess(data: CreateTrusteeAccessData): Promise<TrusteeAccess> {
   try {
+    console.log(`Creating trustee access for vault ID: ${data.originalVaultId} with trustee email: ${data.trusteeEmail}`);
     const trusteeVaultId = TrusteeAccess.generateVaultId();
+    console.log(`Generated trustee vault ID: ${trusteeVaultId}`);
     const recoveryKeyHash = await TrusteeAccess.hashRecoveryKey(data.recoveryPassword);
-
+    // Log the creation for debugging
+  
+    console.log(`Generated trustee vault12 ID: ${trusteeVaultId}`);
+    console.log("My own key", recoveryKeyHash)
     const trusteeAccess = await TrusteeAccess.create({
       trusteeVaultId,
       originalVaultId: data.originalVaultId,

@@ -113,7 +113,7 @@ class EmailService {
     await this.transporter.sendMail({
       from: process.env.FROM_EMAIL || 'noreply@digitalinheritance.com',
       to: trusteeEmail,
-      subject: `🔐 Recovery Access Needed - ${vaultTitle}`,
+      subject: `Recovery Access Needed - ${vaultTitle}`,
       html: emailTemplate,
       text: `Digital Inheritance Recovery Request
       
@@ -150,7 +150,7 @@ If you did not expect this email, please contact support.`
 <body>
     <div class="container">
         <div class="header">
-            <h1>⚠️ Account Activity Warning</h1>
+            <h1> Account Activity Warning</h1>
         </div>
         
         <div class="content">
@@ -176,7 +176,7 @@ If you did not expect this email, please contact support.`
             <p>Simply log into your account to reset the inactivity timer.</p>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${process.env.FRONTEND_URL}/login" class="action-button">🔐 Log Into My Account</a>
+                <a href="${process.env.FRONTEND_URL}/login" class="action-button">Log Into My Account</a>
             </div>
             
             <p><strong>Was this intentional?</strong> If you're planning to be away, you can adjust your inactivity settings in your account preferences.</p>
@@ -194,7 +194,7 @@ If you did not expect this email, please contact support.`
     await this.transporter.sendMail({
       from: process.env.FROM_EMAIL || 'noreply@digitalinheritance.com',
       to: ownerEmail,
-      subject: `⚠️ Account Activity Warning - ${daysSinceLastLogin} days inactive`,
+      subject: `Account Activity Warning - ${daysSinceLastLogin} days inactive`,
       html: emailTemplate,
       text: `Digital Inheritance - Account Activity Warning
 
@@ -232,13 +232,13 @@ This is working as designed for your digital inheritance protection.`
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔐 You've Been Designated as a Digital Trustee</h1>
+            <h1>You've Been Designated as a Digital Trustee</h1>
         </div>
         
         <div class="content">
             <h2>Hello,</h2>
             
-            <p><strong>${ownerName}</strong> (${ownerEmail}) has designated you as a trusted contact for their digital assets.</p>
+            <p>${ownerEmail} has designated you as a trusted contact for their digital assets.</p>
             
             <p>This means that if ${ownerName} becomes unable to access their digital accounts for more than <strong>${inactivityMonths} months</strong>, you will be able to help recover their important information.</p>
             
@@ -248,7 +248,7 @@ This is working as designed for your digital inheritance protection.`
                 <p><small>Keep this ID safe - you'll need it for recovery</small></p>
             </div>
             
-            <h3>📋 Vault Details:</h3>
+            <h3>Vault Details:</h3>
             <ul>
                 <li><strong>Vault Name:</strong> ${vaultTitle}</li>
                 <li><strong>Owner:</strong> ${ownerEmail}</li>
@@ -256,7 +256,7 @@ This is working as designed for your digital inheritance protection.`
             </ul>
             
             <div class="important">
-                <h4>🔑 Important Next Steps:</h4>
+                <h4>Important Next Steps:</h4>
                 <ol>
                     <li><strong>Save your Vault Access ID:</strong> ${trusteeVaultId}</li>
                     <li><strong>Contact ${ownerName}:</strong> They will share a recovery password with you offline</li>
@@ -264,14 +264,7 @@ This is working as designed for your digital inheritance protection.`
                 </ol>
             </div>
             
-            <h3>What happens next?</h3>
-            <ul>
-                <li>If ${ownerName} stays active, no action is needed from you</li>
-                <li>If they become inactive for ${inactivityMonths} months, you'll receive a recovery notification</li>
-                <li>You can then use your Vault Access ID and recovery password to help recover their assets</li>
-            </ul>
-            
-            <h3>🛡️ Your responsibilities:</h3>
+            <h3> Your responsibilities:</h3>
             <ul>
                 <li>Keep your Vault Access ID secure</li>
                 <li>Remember where ${ownerName} told you the recovery password is</li>
@@ -292,7 +285,7 @@ This is working as designed for your digital inheritance protection.`
     await this.transporter.sendMail({
       from: process.env.FROM_EMAIL || 'noreply@digitalinheritance.com',
       to: trusteeEmail,
-      subject: `🔐 You've Been Designated as a Digital Trustee - ${vaultTitle}`,
+      subject: `You've Been Designated as a Digital Trustee - ${vaultTitle}`,
       html: emailTemplate,
       text: `You've Been Designated as a Digital Trustee
 
@@ -335,7 +328,7 @@ If you have questions, contact ${ownerEmail} directly.`
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔓 Recovery Access Now Available</h1>
+            <h1>Recovery Access Now Available</h1>
         </div>
         
         <div class="content">
@@ -344,7 +337,7 @@ If you have questions, contact ${ownerEmail} directly.`
             <p><strong>${ownerName}</strong> (${ownerEmail}) has been inactive for the designated period. As their trusted contact, you can now access their digital inheritance.</p>
             
             <div class="recovery-box">
-                <h3>📋 Recovery Details:</h3>
+                <h3>Recovery Details:</h3>
                 <ul>
                     <li><strong>Vault:</strong> ${vaultTitle}</li>
                     <li><strong>Owner:</strong> ${ownerEmail}</li>
@@ -353,7 +346,7 @@ If you have questions, contact ${ownerEmail} directly.`
             </div>
             
             <div class="important">
-                <h4>⚠️ Before proceeding:</h4>
+                <h4>Before proceeding:</h4>
                 <ul>
                     <li>Have you tried contacting ${ownerName} directly?</li>
                     <li>Are you certain they need assistance?</li>
@@ -361,7 +354,7 @@ If you have questions, contact ${ownerEmail} directly.`
                 </ul>
             </div>
             
-            <h3>🔑 To access the vault:</h3>
+            <h3>To access the vault:</h3>
             <ol>
                 <li>Click the recovery link below</li>
                 <li>Enter your Vault Access ID: <strong>${trusteeVaultId}</strong></li>
@@ -370,7 +363,7 @@ If you have questions, contact ${ownerEmail} directly.`
             </ol>
             
             <div style="text-align: center; margin: 30px 0;">
-                <a href="${recoveryLink}" class="recovery-link">🔓 Begin Recovery Process</a>
+                <a href="${recoveryLink}" class="recovery-link"> Begin Recovery Process</a>
             </div>
             
             <p><strong>Important:</strong> This access should only be used if you're certain ${ownerName} needs assistance. The recovery process will notify them that their vault has been accessed.</p>
@@ -386,7 +379,7 @@ If you have questions, contact ${ownerEmail} directly.`
     await this.transporter.sendMail({
       from: process.env.FROM_EMAIL || 'noreply@digitalinheritance.com',
       to: trusteeEmail,
-      subject: `🔓 Recovery Access Available - ${vaultTitle}`,
+      subject: `Recovery Access Available - ${vaultTitle}`,
       html: emailTemplate,
       text: `Recovery Access Now Available
 
@@ -423,7 +416,7 @@ You'll need the recovery password they shared with you offline.`
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔢 Recovery Verification Code</h1>
+            <h1> Recovery Verification Code</h1>
         </div>
         
         <div class="content">
@@ -437,7 +430,7 @@ You'll need the recovery password they shared with you offline.`
             <p>Enter this code on the recovery page to continue accessing the digital inheritance vault.</p>
             
             <div class="warning">
-                <h4>⚠️ Security Notice:</h4>
+                <h4>Security Notice:</h4>
                 <ul>
                     <li>Only use this code if you initiated a recovery request</li>
                     <li>Never share this code with anyone</li>
