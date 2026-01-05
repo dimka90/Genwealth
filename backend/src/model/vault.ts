@@ -1,367 +1,475 @@
-// import { Model, DataTypes } from "sequelize";
-// import sequelize from "../config/sequelize";
-// import User from "./user";
-
-// export enum SecretType {
-//   SEED_PHRASE = 'seed_phrase',
-//   PASSWORD = 'password',
-//   DOCUMENT = 'document',
-//   NOTE = 'note',
-//   PRIVATE_KEY = 'private_key',
-//   BANK_DETAILS = 'bank_details'
-// }
-
-// class Vault extends Model {
-//   public id!: string;
-//   public userId!: string;
-//   public title!: string;
-//   public description!: string | null;
-//   public encryptedSecret!: string;
-//   public encryptedAESKey!: string;
-//   public secretType!: SecretType;
-//   public ipfsHash!: string | null;
-//   public fileName!: string | null;
-//   public fileSize!: number | null;
-//   public isActive!: boolean;
-//   public readonly createdAt!: Date;
-//   public readonly updatedAt!: Date;
-
-//   // Virtual field to check if it's a file
-//   public get isFile(): boolean {
-//     return this.secretType === SecretType.DOCUMENT && !!this.ipfsHash;
-//   }
-
-//   // Method to get display info
-//   public getDisplayInfo() {
-//     return {
-//       id: this.id,
-//       title: this.title,
-//       description: this.description,
-//       secretType: this.secretType,
-//       isFile: this.isFile,
-//       fileName: this.fileName,
-//       fileSize: this.fileSize,
-//       createdAt: this.createdAt,
-//       updatedAt: this.updatedAt
-//     };
-//   }
-// }
-
-// Vault.init(
-//   {
-//     id: {
-//       type: DataTypes.INTEGER,
-//       autoIncrement: true,
-//       primaryKey: true,
-//       allowNull: false
-//     },
-//     userId: {
-//       type: DataTypes.INTEGER,
-//       allowNull: false,
-//       field: 'user_id',
-//       references: {
-//         model: 'users',
-//         key: 'id'
-//       },
-//       onUpdate: 'CASCADE',
-//       onDelete: 'CASCADE'
-//     },
-//     title: {
-//       type: DataTypes.STRING,
-//       allowNull: false,
-//       validate: {
-//         len: [1, 255]
-//       }
-//     },
-//     description: {
-//       type: DataTypes.TEXT,
-//       allowNull: true
-//     },
-//     encryptedSecret: {
-//       type: DataTypes.TEXT,
-//       allowNull: false,
-//       field: 'encrypted_secret'
-//     },
-//     encryptedAESKey: {
-//       type: DataTypes.TEXT,
-//       allowNull: false,
-//       field: 'encrypted_aes_key'
-//     },
-//     secretType: {
-//       type: DataTypes.ENUM(...Object.values(SecretType)),
-//       allowNull: false,
-//       defaultValue: SecretType.NOTE,
-//       field: 'secret_type'
-//     },
-//     ipfsHash: {
-//       type: DataTypes.STRING,
-//       allowNull: true,
-//       field: 'ipfs_hash'
-//     },
-//     fileName: {
-//       type: DataTypes.STRING,
-//       allowNull: true,
-//       field: 'file_name'
-//     },
-//     fileSize: {
-//       type: DataTypes.BIGINT,
-//       allowNull: true,
-//       field: 'file_size'
-//     },
-//     isActive: {
-//       type: DataTypes.BOOLEAN,
-//       allowNull: false,
-//       defaultValue: true,
-//       field: 'is_active'
-//     }
-//   },
-//   {
-//     sequelize,
-//     tableName: "vaults",
-//     modelName: "Vault",
-//     timestamps: true,
-//     underscored: true
-//   }
-// );
-
-// Vault.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-// User.hasMany(Vault, { foreignKey: 'userId', as: 'vaults' });
-
-// export default Vault;
+import { Request, Response } from "express";
+import {
+  createVault,
+  getVaultById,
+  getVaultsByUserId,
+  getVaultsByUserWallet,
+  getVaultsByType,
+  updateVault,
+  deleteVault,
+  hardDeleteVault,
+  getUserVaultStats,
+  searchVaults,
+  getFileVaults,
+  CreateVaultData,
+  UpdateVaultData
+} from "../db/vault";
+import { SecretType } from "../model/vault";
+import { getUserByWalletAddress } from "../db/user";
+import { createTrusteeAccess } from "../db/trusteeAccess";
+import emailService from "../services/email";
+import { getUserById as fetchUserById } from "../db/user";
 
 
-import { Model, DataTypes } from "sequelize";
-import sequelize from "../config/sequelize";
-import User from "./user";
-import crypto from "crypto";
 
-export enum SecretType {
-  SEED_PHRASE = 'seed_phrase',
-  PASSWORD = 'password',
-  DOCUMENT = 'document',
-  NOTE = 'note',
-  PRIVATE_KEY = 'private_key',
-  BANK_DETAILS = 'bank_details'
-}
+export async function createVaultController(req: Request, res: Response): Promise<Response> {
 
-export enum VaultRecoveryStatus {
-  ACTIVE = 'active',
-  USER_INACTIVE = 'user_inactive',
-  RECOVERY_INITIATED = 'recovery_initiated',
-  RECOVERED = 'recovered',
-  CANCELLED = 'cancelled'
-}
+  const {
+    userId,
+    title,
+    description,
+    encryptedSecret,
+    encryptedKeyForUser,
+    encryptedKeyForTrustee,
+    secretType,
+    ipfsHash,
+    fileName,
+    fileSize,
+    trusteeEmail
+  } = req.body;
 
-class Vault extends Model {
-  public id!: string;
-  public userId!: string;
-  public title!: string;
-  public description!: string | null;
-  public encryptedSecret!: string;
-  public secretType!: SecretType;
-  public ipfsHash!: string | null;
-  public fileName!: string | null;
-  public fileSize!: number | null;
-  public isActive!: boolean;
-  
-  // New trustee fields
-  public trusteeEmail!: string | null;
-  public recoveryStatus!: VaultRecoveryStatus;
-  public recoveryToken!: string | null;
-  public recoveryInitiatedAt!: Date | null;
-  public lastTrusteeNotification!: Date | null;
-  
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-    user: any;
-
-  // Virtual field to check if it's a file
-  public get isFile(): boolean {
-    return this.secretType === SecretType.DOCUMENT && !!this.ipfsHash;
+  if (!userId || !title || !encryptedSecret || !encryptedKeyForUser) {
+    return res.status(400).send({
+      success: false,
+      message: "Fields userId, title, encryptedSecret, and encryptedKeyForUser are required",
+    });
   }
 
-  // Check if vault has trustee protection
-  public get hasTrustee(): boolean {
-    return !!this.trusteeEmail;
+  // If trustee is set, we need the encrypted key for them
+  if (trusteeEmail && !encryptedKeyForTrustee) {
+    return res.status(400).send({
+      success: false,
+      message: "encryptedKeyForTrustee is required when setting a trustee",
+    });
   }
 
-  // Generate secure recovery token
-  public generateRecoveryToken(): string {
-    const token = crypto.randomBytes(32).toString('hex');
-    this.recoveryToken = token;
-    return token;
-  }
-
-  // Check if recovery can be initiated
-  public canInitiateRecovery(): boolean {
-    return this.recoveryStatus === VaultRecoveryStatus.ACTIVE && this.hasTrustee;
-  }
-
-  // Initiate recovery process
-  public async initiateRecovery(): Promise<string> {
-    if (!this.canInitiateRecovery()) {
-      throw new Error('Recovery cannot be initiated for this vault');
+  try {
+    // Get user info for email
+    const user = await getUserById(userId);
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
     }
 
-    const token = this.generateRecoveryToken();
-    this.recoveryStatus = VaultRecoveryStatus.RECOVERY_INITIATED;
-    this.recoveryInitiatedAt = new Date();
-    
-    await this.save();
-    return token;
-  }
-
-  // Complete recovery
-  public async completeRecovery(): Promise<void> {
-    this.recoveryStatus = VaultRecoveryStatus.RECOVERED;
-    await this.save();
-  }
-
-  // Cancel recovery
-  public async cancelRecovery(): Promise<void> {
-    this.recoveryStatus = VaultRecoveryStatus.ACTIVE;
-    this.recoveryToken = null;
-    this.recoveryInitiatedAt = null;
-    await this.save();
-  }
-
-  // Method to get display info (updated)
-  public getDisplayInfo() {
-    return {
-      id: this.id,
-      title: this.title,
-      description: this.description,
-      secretType: this.secretType,
-      isFile: this.isFile,
-      fileName: this.fileName,
-      fileSize: this.fileSize,
-      hasTrustee: this.hasTrustee,
-      trusteeEmail: this.trusteeEmail,
-      recoveryStatus: this.recoveryStatus,
-      createdAt: this.createdAt,
-      updatedAt: this.updatedAt
+    // Create the main vault
+    const vaultData: CreateVaultData = {
+      userId,
+      title,
+      description,
+      encryptedSecret,
+      encryptedKeyForUser,
+      secretType: secretType || SecretType.NOTE,
+      ipfsHash,
+      fileName,
+      fileSize: fileSize ? parseInt(fileSize) : undefined,
+      trusteeEmail
     };
-  }
 
-  // Get recovery display info (for trustee)
-  public getRecoveryDisplayInfo() {
-    return {
-      id: this.id,
-      title: this.title,
-      description: this.description,
-      secretType: this.secretType,
-      isFile: this.isFile,
-      fileName: this.fileName,
-      recoveryStatus: this.recoveryStatus,
-      recoveryInitiatedAt: this.recoveryInitiatedAt
-    };
-  }
-}
+    const vault = await createVault(vaultData);
 
-Vault.init(
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
-      allowNull: false
-    },
-    userId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      field: 'user_id',
-      references: {
-        model: 'users',
-        key: 'id'
+    console.log("Vault created successfully:", vault.id);
+    let trusteeVaultId = null;
+
+    // Create trustee access if trustee email and key provided
+    if (trusteeEmail && encryptedKeyForTrustee) {
+      const trusteeAccess = await createTrusteeAccess({
+        originalVaultId: parseInt(vault.id, 10),
+        trusteeEmail,
+        encryptedKeyForTrustee
+      });
+
+      console.log("Trustee access created successfully:", trusteeAccess.trusteeVaultId);
+      trusteeVaultId = trusteeAccess.trusteeVaultId;
+
+      // Send trustee designation email
+      if (process.env.NODE_ENV !== "test") {
+        await emailService.sendTrusteeDesignationEmail({
+          trusteeEmail,
+          ownerEmail: user.email,
+          ownerName: user.email.split('@')[0],
+          vaultTitle: vault.title,
+          trusteeVaultId: trusteeVaultId,
+          inactivityMonths: user.inactivityMonths
+        });
+      }
+    }
+
+    return res.status(201).send({
+      success: true,
+      message: "Successfully created new vault" + (trusteeEmail ? " and notified trustee" : ""),
+      data: {
+        vault: vault,
+        trusteeVaultId: trusteeVaultId,
+        trusteeNotified: !!trusteeEmail
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE'
-    },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        len: [1, 255]
-      }
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true
-    },
-    encryptedSecret: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      field: 'encrypted_secret'
-    },
-    secretType: {
-      type: DataTypes.ENUM(...Object.values(SecretType)),
-      allowNull: false,
-      defaultValue: SecretType.NOTE,
-      field: 'secret_type'
-    },
-    ipfsHash: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      field: 'ipfs_hash'
-    },
-    fileName: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      field: 'file_name'
-    },
-    fileSize: {
-      type: DataTypes.BIGINT,
-      allowNull: true,
-      field: 'file_size'
-    },
-    isActive: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-      field: 'is_active'
-    },
-    // New trustee fields
-    trusteeEmail: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      field: 'trustee_email',
-      validate: {
-        isEmail: true
-      }
-    },
-    recoveryStatus: {
-      type: DataTypes.ENUM(...Object.values(VaultRecoveryStatus)),
-      allowNull: false,
-      defaultValue: VaultRecoveryStatus.ACTIVE,
-      field: 'recovery_status'
-    },
-    recoveryToken: {
-      type: DataTypes.STRING,
-      allowNull: true,
-      unique: true,
-      field: 'recovery_token'
-    },
-    recoveryInitiatedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      field: 'recovery_initiated_at'
-    },
-    lastTrusteeNotification: {
-      type: DataTypes.DATE,
-      allowNull: true,
-      field: 'last_trustee_notification'
-    }
-  },
-  {
-    sequelize,
-    tableName: "vaults",
-    modelName: "Vault",
-    timestamps: true,
-    underscored: true
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
   }
-);
+}
 
-Vault.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-User.hasMany(Vault, { foreignKey: 'userId', as: 'vaults' });
 
-export default Vault;
+
+export async function getVaultController(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).send({
+      success: false,
+      message: "Vault ID is required",
+    });
+  }
+
+  try {
+    const vault = await getVaultById(id);
+
+    if (!vault) {
+      return res.status(404).send({
+        success: false,
+        message: "Vault not found",
+      });
+    }
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault retrieved successfully",
+      data: vault,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getUserVaultsController(req: Request, res: Response): Promise<Response> {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID is required",
+    });
+  }
+
+  try {
+    const vaults = await getVaultsByUserId(userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "User vaults retrieved successfully",
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getUserVaultsByWalletController(req: Request, res: Response): Promise<Response> {
+  const { walletAddress } = req.params;
+
+  if (!walletAddress) {
+    return res.status(400).send({
+      success: false,
+      message: "Wallet address is required",
+    });
+  }
+
+  try {
+    const vaults = await getVaultsByUserWallet(walletAddress);
+
+    return res.status(200).send({
+      success: true,
+      message: "User vaults retrieved successfully",
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getVaultsByTypeController(req: Request, res: Response): Promise<Response> {
+  const { userId, secretType } = req.params;
+
+  if (!userId || !secretType) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID and secret type are required",
+    });
+  }
+
+  // Validate secret type
+  if (!Object.values(SecretType).includes(secretType as SecretType)) {
+    return res.status(400).send({
+      success: false,
+      message: "Invalid secret type",
+    });
+  }
+
+  try {
+    const vaults = await getVaultsByType(userId, secretType as SecretType);
+
+    return res.status(200).send({
+      success: true,
+      message: `Vaults of type ${secretType} retrieved successfully`,
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function updateVaultController(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+  const updateData: UpdateVaultData = req.body;
+
+  if (!id) {
+    return res.status(400).send({
+      success: false,
+      message: "Vault ID is required",
+    });
+  }
+
+  try {
+    const result = await updateVault(id, updateData);
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault updated successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function deleteVaultController(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+  const { userId } = req.body;
+
+  if (!id || !userId) {
+    return res.status(400).send({
+      success: false,
+      message: "Vault ID and User ID are required",
+    });
+  }
+
+  try {
+    await deleteVault(id, userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault deleted successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function hardDeleteVaultController(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+  const { userId } = req.body;
+
+  if (!id || !userId) {
+    return res.status(400).send({
+      success: false,
+      message: "Vault ID and User ID are required",
+    });
+  }
+
+  try {
+    await hardDeleteVault(id, userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault permanently deleted successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getUserVaultStatsController(req: Request, res: Response): Promise<Response> {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID is required",
+    });
+  }
+
+  try {
+    const stats = await getUserVaultStats(userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "User vault statistics retrieved successfully",
+      data: stats,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function searchVaultsController(req: Request, res: Response): Promise<Response> {
+  const { userId } = req.params;
+  const { q: searchTerm } = req.query;
+
+  if (!userId || !searchTerm) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID and search term are required",
+    });
+  }
+
+  try {
+    const vaults = await searchVaults(userId, searchTerm as string);
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault search completed successfully",
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getFileVaultsController(req: Request, res: Response): Promise<Response> {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID is required",
+    });
+  }
+
+  try {
+    const vaults = await getFileVaults(userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "File vaults retrieved successfully",
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+// Helper controller to create vault with wallet authentication
+export async function createVaultByWalletController(req: Request, res: Response): Promise<Response> {
+  const {
+    walletAddress,
+    title,
+    description,
+    encryptedSecret,
+    encryptedKeyForUser,
+    secretType,
+    ipfsHash,
+    fileName,
+    fileSize,
+    trusteeEmail // New trustee field
+  } = req.body;
+
+  if (!walletAddress || !title || !encryptedSecret || !encryptedKeyForUser) {
+    return res.status(400).send({
+      success: false,
+      message: "Fields walletAddress, title, encryptedSecret, and encryptedKeyForUser are required",
+    });
+  }
+
+  try {
+    // Find user by wallet address
+    const user = await getUserByWalletAddress(walletAddress);
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found with this wallet address",
+      });
+    }
+
+    const vaultData: CreateVaultData = {
+      userId: user.id.toString(),
+      title,
+      description,
+      encryptedSecret,
+      encryptedKeyForUser,
+      secretType: secretType || SecretType.NOTE,
+      ipfsHash,
+      fileName,
+      fileSize: fileSize ? parseInt(fileSize) : undefined,
+      trusteeEmail
+    };
+
+    const result = await createVault(vaultData);
+
+    return res.status(201).send({
+      success: true,
+      message: "Successfully created new vault",
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+async function getUserById(userId: string) {
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  const user = await fetchUserById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+}
