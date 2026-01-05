@@ -6,7 +6,9 @@ import User from "../model/user";
 export interface CreateTrusteeAccessData {
   originalVaultId: number;
   trusteeEmail: string;
-  recoveryPassword: string;
+  originalVaultId: number;
+  trusteeEmail: string;
+  encryptedKeyForTrustee: string;
 }
 
 export async function createTrusteeAccess(data: CreateTrusteeAccessData): Promise<TrusteeAccess> {
@@ -14,16 +16,16 @@ export async function createTrusteeAccess(data: CreateTrusteeAccessData): Promis
     console.log(`Creating trustee access for vault ID: ${data.originalVaultId} with trustee email: ${data.trusteeEmail}`);
     const trusteeVaultId = TrusteeAccess.generateVaultId();
     console.log(`Generated trustee vault ID: ${trusteeVaultId}`);
-    const recoveryKeyHash = await TrusteeAccess.hashRecoveryKey(data.recoveryPassword);
+    console.log(`Generated trustee vault ID: ${trusteeVaultId}`);
+
     // Log the creation for debugging
-  
-    console.log(`Generated trustee vault12 ID: ${trusteeVaultId}`);
-    console.log("My own key", recoveryKeyHash)
+    console.log(`Trustee access created for vault: ${data.originalVaultId}`);
+
     const trusteeAccess = await TrusteeAccess.create({
       trusteeVaultId,
       originalVaultId: data.originalVaultId,
       trusteeEmail: data.trusteeEmail,
-      recoveryKeyHash,
+      encryptedKeyForTrustee: data.encryptedKeyForTrustee,
       isActive: false
     });
 
