@@ -91,3 +91,55 @@ export async function initiateVaultRecoveryController(
 }
 
 // Validate recovery token and show recovery page info
+export async function validateRecoveryTokenController(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  const { token } = req.params;
+
+  if (!token) {
+    return res.status(400).send({
+      success: false,
+      message: "Recovery token is required",
+    });
+  }
+
+  try {
+    const vault = await findVaultByRecoveryToken(token);
+
+    if (!vault) {
+      return res.status(404).send({
+        success: false,
+        message: "Invalid or expired recovery token",
+      });
+    }
+
+    if (vault.recoveryStatus !== VaultRecoveryStatus.PENDING && vault.recoveryStatus !== VaultRecoveryStatus.ACTIVE) {
+      return res.status(400).send({
+        success: false,
+        message: "Recovery process is not active for this vault",
+      });
+    }
+
+    return res.status(200).send({
+      success: true,
+      message: "Recovery token is valid",
+      data: {
+        vault: {
+          title: vault.title,
+          description: vault.description,
+          secretType: vault.secretType
+        },
+        ownerEmail: vault.user?.email,
+        ownerName: vault.user?.email?.split("@")[0], // Simple name extraction
+      },
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+// Attempt to recover vault with recovery password
