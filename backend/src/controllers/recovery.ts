@@ -143,3 +143,159 @@ export async function validateRecoveryTokenController(
 }
 
 // Attempt to recover vault with recovery password
+export async function recoverVaultController(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  const { token } = req.params;
+  const { recoveryPassword } = req.body;
+
+  if (!token || !recoveryPassword) {
+    return res.status(400).send({
+      success: false,
+      message: "Recovery token and recovery password are required",
+    });
+  }
+
+  try {
+    const vault = await findVaultByRecoveryToken(token);
+
+    if (!vault) {
+      return res.status(404).send({
+        success: false,
+        message: "Invalid or expired recovery token",
+      });
+    }
+
+    if (vault.recoveryStatus !== VaultRecoveryStatus.PENDING && vault.recoveryStatus !== VaultRecoveryStatus.ACTIVE) {
+      return res.status(400).send({
+        success: false,
+        message: "Recovery process is not active for this vault",
+      });
+    }
+
+    // Mark vault as recovered/active
+    vault.recoveryStatus = VaultRecoveryStatus.COMPLETED; // or ACTIVE? 
+    // If completed, maybe we just clear token? 
+    // For ZK, the "Recovery" is just access to the blobs.
+    // Let's set to COMPLETED and clear token to prevent re-use?
+    // Or keep it active?
+    vault.recoveryToken = null;
+    await vault.save();
+
+    // Send completion notification email
+    if (
+      process.env.NODE_ENV !== "test" &&
+      vault.user?.email &&
+      vault.trusteeEmail
+    ) {
+      await emailService.sendRecoveryCompleteNotification(
+        vault.user.email,
+        vault.title,
+        vault.trusteeEmail
+      );
+    }
+
+    // Return the encrypted secret for frontend decryption
+    // The frontend will use the recovery password to decrypt it
+    return res.status(200).send({
+      success: true,
+      message:
+        "Recovery successful! Use the recovery password to decrypt the secret in your browser.",
+      data: {
+        encryptedSecret: vault.encryptedSecret,
+        encryptedKeyForUser: vault.encryptedKeyForUser, // Provide user key if that helps? 
+
+        vaultInfo: {
+          title: vault.title,
+          description: vault.description,
+          secretType: vault.secretType
+        },
+        instructions:
+          "The encrypted secret is provided. Use your recovery password to decrypt it client-side.",
+        ownerEmail: vault.user?.email,
+      },
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Recovery failed: ${error.message}`,
+    });
+  }
+}
+
+// Cancel recovery process
+export async function cancelRecoveryController(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  const { token } = req.params;
+
+  if (!token) {
+    return res.status(400).send({
+      success: false,
+      message: "Recovery token is required",
+    });
+  }
+
+  try {
+    const vault = await findVaultByRecoveryToken(token);
+
+    if (!vault) {
+      return res.status(404).send({
+        success: false,
+        message: "Invalid recovery token",
+      });
+    }
+
+    vault.recoveryStatus = VaultRecoveryStatus.NONE;
+    vault.recoveryToken = null;
+    await vault.save();
+
+    return res.status(200).send({
+      success: true,
+      message: "Recovery process cancelled successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+// Get all vaults requiring recovery (for admin/monitoring)
+export async function getVaultsRequiringRecoveryController(
+  req: Request,
+  res: Response
+): Promise<Response> {
+  try {
+    const vaults = await getVaultsRequiringRecovery();
+
+    return res.status(200).send({
+      success: true,
+      message: "Vaults requiring recovery retrieved successfully",
+      data: vaults.map((vault) => ({
+        id: vault.id,
+        title: vault.title,
+        trusteeEmail: vault.trusteeEmail,
+        recoveryStatus: vault.recoveryStatus,
+        owner: vault.user
+          ? {
+            email: vault.user.email,
+            lastLogin: vault.user.lastLogin,
+            inactiveForDays: Math.floor(
+              (Date.now() - new Date(vault.user.lastLogin).getTime()) /
+              (1000 * 60 * 60 * 24)
+            ),
+          }
+          : null,
+      })),
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
