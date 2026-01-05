@@ -1,475 +1,117 @@
-import { Request, Response } from "express";
-import {
-  createVault,
-  getVaultById,
-  getVaultsByUserId,
-  getVaultsByUserWallet,
-  getVaultsByType,
-  updateVault,
-  deleteVault,
-  hardDeleteVault,
-  getUserVaultStats,
-  searchVaults,
-  getFileVaults,
-  CreateVaultData,
-  UpdateVaultData
-} from "../db/vault";
-import { SecretType } from "../model/vault";
-import { getUserByWalletAddress } from "../db/user";
-import { createTrusteeAccess } from "../db/trusteeAccess";
-import emailService from "../services/email";
-import { getUserById as fetchUserById } from "../db/user";
 
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/sequelize";
+import User from "./user";
 
+export enum SecretType {
+  NOTE = "note",
+  DOCUMENT = "document",
+  OTHER = "other"
+}
 
-export async function createVaultController(req: Request, res: Response): Promise<Response> {
+export enum VaultRecoveryStatus {
+  NONE = "none",
+  PENDING = "pending",
+  ACTIVE = "active",
+  COMPLETED = "completed"
+}
 
-  const {
-    userId,
-    title,
-    description,
-    encryptedSecret,
-    encryptedKeyForUser,
-    encryptedKeyForTrustee,
-    secretType,
-    ipfsHash,
-    fileName,
-    fileSize,
-    trusteeEmail
-  } = req.body;
+class Vault extends Model {
+  public id!: number;
+  public userId!: number;
+  public title!: string;
+  public description!: string;
+  public encryptedSecret!: string;
+  public encryptedKeyForUser!: string;
+  public secretType!: SecretType;
+  public ipfsHash!: string | null;
+  public fileName!: string | null;
+  public fileSize!: number | null;
+  public trusteeEmail!: string | null;
+  public isActive!: boolean;
+  public recoveryStatus!: VaultRecoveryStatus;
+  public recoveryToken!: string | null;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 
-  if (!userId || !title || !encryptedSecret || !encryptedKeyForUser) {
-    return res.status(400).send({
-      success: false,
-      message: "Fields userId, title, encryptedSecret, and encryptedKeyForUser are required",
-    });
-  }
+  // Associations
+  public readonly user?: User;
+}
 
-  // If trustee is set, we need the encrypted key for them
-  if (trusteeEmail && !encryptedKeyForTrustee) {
-    return res.status(400).send({
-      success: false,
-      message: "encryptedKeyForTrustee is required when setting a trustee",
-    });
-  }
-
-  try {
-    // Get user info for email
-    const user = await getUserById(userId);
-    if (!user) {
-      return res.status(404).send({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    // Create the main vault
-    const vaultData: CreateVaultData = {
-      userId,
-      title,
-      description,
-      encryptedSecret,
-      encryptedKeyForUser,
-      secretType: secretType || SecretType.NOTE,
-      ipfsHash,
-      fileName,
-      fileSize: fileSize ? parseInt(fileSize) : undefined,
-      trusteeEmail
-    };
-
-    const vault = await createVault(vaultData);
-
-    console.log("Vault created successfully:", vault.id);
-    let trusteeVaultId = null;
-
-    // Create trustee access if trustee email and key provided
-    if (trusteeEmail && encryptedKeyForTrustee) {
-      const trusteeAccess = await createTrusteeAccess({
-        originalVaultId: parseInt(vault.id, 10),
-        trusteeEmail,
-        encryptedKeyForTrustee
-      });
-
-      console.log("Trustee access created successfully:", trusteeAccess.trusteeVaultId);
-      trusteeVaultId = trusteeAccess.trusteeVaultId;
-
-      // Send trustee designation email
-      if (process.env.NODE_ENV !== "test") {
-        await emailService.sendTrusteeDesignationEmail({
-          trusteeEmail,
-          ownerEmail: user.email,
-          ownerName: user.email.split('@')[0],
-          vaultTitle: vault.title,
-          trusteeVaultId: trusteeVaultId,
-          inactivityMonths: user.inactivityMonths
-        });
-      }
-    }
-
-    return res.status(201).send({
-      success: true,
-      message: "Successfully created new vault" + (trusteeEmail ? " and notified trustee" : ""),
-      data: {
-        vault: vault,
-        trusteeVaultId: trusteeVaultId,
-        trusteeNotified: !!trusteeEmail
+Vault.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: User,
+        key: "id",
       },
-    });
-  } catch (error: any) {
-    return res.status(400).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-
-
-export async function getVaultController(req: Request, res: Response): Promise<Response> {
-  const { id } = req.params;
-
-  if (!id) {
-    return res.status(400).send({
-      success: false,
-      message: "Vault ID is required",
-    });
-  }
-
-  try {
-    const vault = await getVaultById(id);
-
-    if (!vault) {
-      return res.status(404).send({
-        success: false,
-        message: "Vault not found",
-      });
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    encryptedSecret: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    encryptedKeyForUser: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    secretType: {
+      type: DataTypes.ENUM(...Object.values(SecretType)),
+      defaultValue: SecretType.NOTE,
+    },
+    ipfsHash: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    fileName: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    fileSize: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    trusteeEmail: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isEmail: true,
+      }
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+    recoveryStatus: {
+      type: DataTypes.ENUM(...Object.values(VaultRecoveryStatus)),
+      defaultValue: VaultRecoveryStatus.NONE,
+    },
+    recoveryToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
     }
-
-    return res.status(200).send({
-      success: true,
-      message: "Vault retrieved successfully",
-      data: vault,
-    });
-  } catch (error: any) {
-    return res.status(500).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
+  },
+  {
+    sequelize,
+    tableName: "vaults",
   }
-}
+);
 
-export async function getUserVaultsController(req: Request, res: Response): Promise<Response> {
-  const { userId } = req.params;
+Vault.belongsTo(User, { foreignKey: "userId", as: "user" });
+User.hasMany(Vault, { foreignKey: "userId", as: "vaults" });
 
-  if (!userId) {
-    return res.status(400).send({
-      success: false,
-      message: "User ID is required",
-    });
-  }
-
-  try {
-    const vaults = await getVaultsByUserId(userId);
-
-    return res.status(200).send({
-      success: true,
-      message: "User vaults retrieved successfully",
-      data: vaults,
-    });
-  } catch (error: any) {
-    return res.status(500).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-export async function getUserVaultsByWalletController(req: Request, res: Response): Promise<Response> {
-  const { walletAddress } = req.params;
-
-  if (!walletAddress) {
-    return res.status(400).send({
-      success: false,
-      message: "Wallet address is required",
-    });
-  }
-
-  try {
-    const vaults = await getVaultsByUserWallet(walletAddress);
-
-    return res.status(200).send({
-      success: true,
-      message: "User vaults retrieved successfully",
-      data: vaults,
-    });
-  } catch (error: any) {
-    return res.status(500).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-export async function getVaultsByTypeController(req: Request, res: Response): Promise<Response> {
-  const { userId, secretType } = req.params;
-
-  if (!userId || !secretType) {
-    return res.status(400).send({
-      success: false,
-      message: "User ID and secret type are required",
-    });
-  }
-
-  // Validate secret type
-  if (!Object.values(SecretType).includes(secretType as SecretType)) {
-    return res.status(400).send({
-      success: false,
-      message: "Invalid secret type",
-    });
-  }
-
-  try {
-    const vaults = await getVaultsByType(userId, secretType as SecretType);
-
-    return res.status(200).send({
-      success: true,
-      message: `Vaults of type ${secretType} retrieved successfully`,
-      data: vaults,
-    });
-  } catch (error: any) {
-    return res.status(500).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-export async function updateVaultController(req: Request, res: Response): Promise<Response> {
-  const { id } = req.params;
-  const updateData: UpdateVaultData = req.body;
-
-  if (!id) {
-    return res.status(400).send({
-      success: false,
-      message: "Vault ID is required",
-    });
-  }
-
-  try {
-    const result = await updateVault(id, updateData);
-
-    return res.status(200).send({
-      success: true,
-      message: "Vault updated successfully",
-      data: result,
-    });
-  } catch (error: any) {
-    return res.status(400).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-export async function deleteVaultController(req: Request, res: Response): Promise<Response> {
-  const { id } = req.params;
-  const { userId } = req.body;
-
-  if (!id || !userId) {
-    return res.status(400).send({
-      success: false,
-      message: "Vault ID and User ID are required",
-    });
-  }
-
-  try {
-    await deleteVault(id, userId);
-
-    return res.status(200).send({
-      success: true,
-      message: "Vault deleted successfully",
-    });
-  } catch (error: any) {
-    return res.status(400).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-export async function hardDeleteVaultController(req: Request, res: Response): Promise<Response> {
-  const { id } = req.params;
-  const { userId } = req.body;
-
-  if (!id || !userId) {
-    return res.status(400).send({
-      success: false,
-      message: "Vault ID and User ID are required",
-    });
-  }
-
-  try {
-    await hardDeleteVault(id, userId);
-
-    return res.status(200).send({
-      success: true,
-      message: "Vault permanently deleted successfully",
-    });
-  } catch (error: any) {
-    return res.status(400).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-export async function getUserVaultStatsController(req: Request, res: Response): Promise<Response> {
-  const { userId } = req.params;
-
-  if (!userId) {
-    return res.status(400).send({
-      success: false,
-      message: "User ID is required",
-    });
-  }
-
-  try {
-    const stats = await getUserVaultStats(userId);
-
-    return res.status(200).send({
-      success: true,
-      message: "User vault statistics retrieved successfully",
-      data: stats,
-    });
-  } catch (error: any) {
-    return res.status(500).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-export async function searchVaultsController(req: Request, res: Response): Promise<Response> {
-  const { userId } = req.params;
-  const { q: searchTerm } = req.query;
-
-  if (!userId || !searchTerm) {
-    return res.status(400).send({
-      success: false,
-      message: "User ID and search term are required",
-    });
-  }
-
-  try {
-    const vaults = await searchVaults(userId, searchTerm as string);
-
-    return res.status(200).send({
-      success: true,
-      message: "Vault search completed successfully",
-      data: vaults,
-    });
-  } catch (error: any) {
-    return res.status(500).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-export async function getFileVaultsController(req: Request, res: Response): Promise<Response> {
-  const { userId } = req.params;
-
-  if (!userId) {
-    return res.status(400).send({
-      success: false,
-      message: "User ID is required",
-    });
-  }
-
-  try {
-    const vaults = await getFileVaults(userId);
-
-    return res.status(200).send({
-      success: true,
-      message: "File vaults retrieved successfully",
-      data: vaults,
-    });
-  } catch (error: any) {
-    return res.status(500).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-
-// Helper controller to create vault with wallet authentication
-export async function createVaultByWalletController(req: Request, res: Response): Promise<Response> {
-  const {
-    walletAddress,
-    title,
-    description,
-    encryptedSecret,
-    encryptedKeyForUser,
-    secretType,
-    ipfsHash,
-    fileName,
-    fileSize,
-    trusteeEmail // New trustee field
-  } = req.body;
-
-  if (!walletAddress || !title || !encryptedSecret || !encryptedKeyForUser) {
-    return res.status(400).send({
-      success: false,
-      message: "Fields walletAddress, title, encryptedSecret, and encryptedKeyForUser are required",
-    });
-  }
-
-  try {
-    // Find user by wallet address
-    const user = await getUserByWalletAddress(walletAddress);
-    if (!user) {
-      return res.status(404).send({
-        success: false,
-        message: "User not found with this wallet address",
-      });
-    }
-
-    const vaultData: CreateVaultData = {
-      userId: user.id.toString(),
-      title,
-      description,
-      encryptedSecret,
-      encryptedKeyForUser,
-      secretType: secretType || SecretType.NOTE,
-      ipfsHash,
-      fileName,
-      fileSize: fileSize ? parseInt(fileSize) : undefined,
-      trusteeEmail
-    };
-
-    const result = await createVault(vaultData);
-
-    return res.status(201).send({
-      success: true,
-      message: "Successfully created new vault",
-      data: result,
-    });
-  } catch (error: any) {
-    return res.status(400).send({
-      success: false,
-      message: `Error: ${error.message}`,
-    });
-  }
-}
-async function getUserById(userId: string) {
-  if (!userId) {
-    throw new Error("User ID is required");
-  }
-
-  const user = await fetchUserById(userId);
-  if (!user) {
-    throw new Error("User not found");
-  }
-
-  return user;
-}
+export default Vault;
