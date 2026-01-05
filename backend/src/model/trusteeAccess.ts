@@ -1,139 +1,93 @@
 
-import TrusteeAccess from "../model/trusteeAccess";
-import Vault from "../model/vault";
-import User from "../model/user";
+import { Model, DataTypes } from "sequelize";
+import sequelize from "../config/sequelize";
+import Vault from "./vault";
+import crypto from "crypto";
 
-export interface CreateTrusteeAccessData {
-  originalVaultId: number;
-  trusteeEmail: string;
-  originalVaultId: number;
-  trusteeEmail: string;
-  encryptedKeyForTrustee: string;
-}
+class TrusteeAccess extends Model {
+  public id!: number;
+  public trusteeVaultId!: string;
+  public originalVaultId!: number;
+  public trusteeEmail!: string;
+  public encryptedKeyForTrustee!: string;
+  public isActive!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
 
-export async function createTrusteeAccess(data: CreateTrusteeAccessData): Promise<TrusteeAccess> {
-  try {
-    console.log(`Creating trustee access for vault ID: ${data.originalVaultId} with trustee email: ${data.trusteeEmail}`);
-    const trusteeVaultId = TrusteeAccess.generateVaultId();
-    console.log(`Generated trustee vault ID: ${trusteeVaultId}`);
-    console.log(`Generated trustee vault ID: ${trusteeVaultId}`);
+  // Associations
+  public readonly vault?: Vault;
 
-    // Log the creation for debugging
-    console.log(`Trustee access created for vault: ${data.originalVaultId}`);
+  // Helper to activate recovery 
+  public async activateRecovery(): Promise<void> {
+    this.isActive = true;
+    await this.save();
 
-    const trusteeAccess = await TrusteeAccess.create({
-      trusteeVaultId,
-      originalVaultId: data.originalVaultId,
-      trusteeEmail: data.trusteeEmail,
-      encryptedKeyForTrustee: data.encryptedKeyForTrustee,
-      isActive: false
-    });
-
-    return trusteeAccess;
-  } catch (error: any) {
-    throw new Error(`Failed to create trustee access: ${error.message}`);
-  }
-}
-
-// Find by trustee vault ID
-export async function getTrusteeAccessByVaultId(trusteeVaultId: string): Promise<TrusteeAccess | null> {
-  try {
-    return await TrusteeAccess.findOne({
-      where: { trusteeVaultId },
-      include: [
-        {
-          model: Vault,
-          as: 'vault',
-          include: [
-            {
-              model: User,
-              as: 'user',
-              attributes: ['id', 'email', 'walletAddress']
-            }
-          ]
-        }
-      ]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get trustee access: ${error.message}`);
-  }
-}
-
-// Get all trustee access records for a vault
-export async function getTrusteeAccessByOriginalVaultId(originalVaultId: number): Promise<TrusteeAccess | null> {
-  try {
-    return await TrusteeAccess.findOne({
-      where: { originalVaultId },
-      include: [
-        {
-          model: Vault,
-          as: 'vault'
-        }
-      ]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get trustee access by original vault ID: ${error.message}`);
-  }
-}
-
-// Get all inactive user vaults that need recovery activation
-export async function getVaultsNeedingRecoveryActivation(): Promise<TrusteeAccess[]> {
-  try {
-    return await TrusteeAccess.findAll({
-      where: {
-        isActive: false
-      },
-      include: [
-        {
-          model: Vault,
-          as: 'vault',
-          where: {
-            isActive: true
-          },
-          include: [
-            {
-              model: User,
-              as: 'user',
-              attributes: ['id', 'email', 'walletAddress', 'lastLogin', 'inactivityMonths']
-            }
-          ]
-        }
-      ]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get vaults needing recovery activation: ${error.message}`);
-  }
-}
-
-// Activate recovery for user's vaults
-export async function activateRecoveryForUser(userId: string): Promise<TrusteeAccess[]> {
-  try {
-    const trusteeAccessRecords = await TrusteeAccess.findAll({
-      where: {
-        isActive: false
-      },
-      include: [
-        {
-          model: Vault,
-          as: 'vault',
-          where: {
-            userId: userId,
-            isActive: true
-          }
-        }
-      ]
-    });
-
-    const activatedRecords: TrusteeAccess[] = [];
-    for (const record of trusteeAccessRecords) {
-      await record.activateRecovery();
-      activatedRecords.push(record);
+    // Also update the vault status
+    if (this.originalVaultId) {
+      const vault = await Vault.findByPk(this.originalVaultId);
+      if (vault) {
+        // Generate a recovery token for the vault owner to potentially reclaim?
+        // Or strictly for the trustee to use?
+        // For now, just mark vault as in recovery.
+        // Import enum from Vault to avoid circular dep issues in value assignment if possible, 
+        // or just use string 'active' if that matches the enum.
+        // Using 'active' string to match VaultRecoveryStatus.ACTIVE
+        await vault.update({
+          recoveryStatus: 'active'
+        });
+      }
     }
+  }
 
-    return activatedRecords;
-  } catch (error: any) {
-    throw new Error(`Failed to activate recovery for user: ${error.message}`);
+  public static generateVaultId(): string {
+    return crypto.randomUUID();
   }
 }
 
-export { TrusteeAccess };
+TrusteeAccess.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    trusteeVaultId: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      unique: true,
+      allowNull: false
+    },
+    originalVaultId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: Vault,
+        key: "id",
+      },
+    },
+    trusteeEmail: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      validate: {
+        isEmail: true,
+      }
+    },
+    encryptedKeyForTrustee: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    isActive: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    }
+  },
+  {
+    sequelize,
+    tableName: "trustee_access",
+  }
+);
+
+TrusteeAccess.belongsTo(Vault, { foreignKey: "originalVaultId", as: "vault" });
+Vault.hasOne(TrusteeAccess, { foreignKey: "originalVaultId", as: "trusteeAccess" });
+
+export default TrusteeAccess;
