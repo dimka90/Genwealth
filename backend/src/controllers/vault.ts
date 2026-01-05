@@ -15,7 +15,7 @@ import {
   UpdateVaultData
 } from "../db/vault";
 import { SecretType } from "../model/vault";
-import {  getUserByWalletAddress } from "../db/user";
+import { getUserByWalletAddress } from "../db/user";
 import { createTrusteeAccess } from "../db/trusteeAccess";
 import emailService from "../services/email";
 import { getUserById as fetchUserById } from "../db/user";
@@ -24,24 +24,32 @@ import { getUserById as fetchUserById } from "../db/user";
 
 export async function createVaultController(req: Request, res: Response): Promise<Response> {
 
-  const { 
-    userId, 
-    title, 
-    description, 
-    encryptedSecret, 
+  const {
+    userId,
+    title,
+    description,
+    encryptedSecret,
+    encryptedKeyForUser,
+    encryptedKeyForTrustee,
     secretType,
     ipfsHash,
     fileName,
     fileSize,
-    trusteeEmail,
-    recoveryPassword  
+    trusteeEmail
   } = req.body;
 
-  console.log("I am doing great")
-  if (!userId || !title || !encryptedSecret || !recoveryPassword || !trusteeEmail) {
+  if (!userId || !title || !encryptedSecret || !encryptedKeyForUser) {
     return res.status(400).send({
       success: false,
-      message: "Fields userId, title, encryptedSecret, recoveryPassword, and trusteeEmail are required",
+      message: "Fields userId, title, encryptedSecret, and encryptedKeyForUser are required",
+    });
+  }
+
+  // If trustee is set, we need the encrypted key for them
+  if (trusteeEmail && !encryptedKeyForTrustee) {
+    return res.status(400).send({
+      success: false,
+      message: "encryptedKeyForTrustee is required when setting a trustee",
     });
   }
 
@@ -61,6 +69,7 @@ export async function createVaultController(req: Request, res: Response): Promis
       title,
       description,
       encryptedSecret,
+      encryptedKeyForUser,
       secretType: secretType || SecretType.NOTE,
       ipfsHash,
       fileName,
@@ -73,15 +82,15 @@ export async function createVaultController(req: Request, res: Response): Promis
     console.log("Vault created successfully:", vault.id);
     let trusteeVaultId = null;
 
-    // Create trustee access if trustee email and recovery password provided
-    if (trusteeEmail && recoveryPassword) {
+    // Create trustee access if trustee email and key provided
+    if (trusteeEmail && encryptedKeyForTrustee) {
       const trusteeAccess = await createTrusteeAccess({
         originalVaultId: parseInt(vault.id, 10),
         trusteeEmail,
-        recoveryPassword
+        encryptedKeyForTrustee
       });
 
-      console.log("Trustee access created successfully:", trusteeAccess.trusteeVaultId);    
+      console.log("Trustee access created successfully:", trusteeAccess.trusteeVaultId);
       trusteeVaultId = trusteeAccess.trusteeVaultId;
 
       // Send trustee designation email
@@ -128,7 +137,7 @@ export async function getVaultController(req: Request, res: Response): Promise<R
 
   try {
     const vault = await getVaultById(id);
-    
+
     if (!vault) {
       return res.status(404).send({
         success: false,
@@ -395,11 +404,12 @@ export async function getFileVaultsController(req: Request, res: Response): Prom
 
 // Helper controller to create vault with wallet authentication
 export async function createVaultByWalletController(req: Request, res: Response): Promise<Response> {
-  const { 
+  const {
     walletAddress,
-    title, 
-    description, 
-    encryptedSecret, // Simplified - no separate AES key
+    title,
+    description,
+    encryptedSecret,
+    encryptedKeyForUser,
     secretType,
     ipfsHash,
     fileName,
@@ -407,10 +417,10 @@ export async function createVaultByWalletController(req: Request, res: Response)
     trusteeEmail // New trustee field
   } = req.body;
 
-  if (!walletAddress || !title || !encryptedSecret) {
+  if (!walletAddress || !title || !encryptedSecret || !encryptedKeyForUser) {
     return res.status(400).send({
       success: false,
-      message: "Fields walletAddress, title, and encryptedSecret are required",
+      message: "Fields walletAddress, title, encryptedSecret, and encryptedKeyForUser are required",
     });
   }
 
@@ -428,7 +438,8 @@ export async function createVaultByWalletController(req: Request, res: Response)
       userId: user.id.toString(),
       title,
       description,
-      encryptedSecret, // Already encrypted with recovery password on frontend
+      encryptedSecret,
+      encryptedKeyForUser,
       secretType: secretType || SecretType.NOTE,
       ipfsHash,
       fileName,
