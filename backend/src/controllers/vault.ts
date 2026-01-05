@@ -403,3 +403,73 @@ export async function getFileVaultsController(req: Request, res: Response): Prom
 }
 
 // Helper controller to create vault with wallet authentication
+export async function createVaultByWalletController(req: Request, res: Response): Promise<Response> {
+  const {
+    walletAddress,
+    title,
+    description,
+    encryptedSecret,
+    encryptedKeyForUser,
+    secretType,
+    ipfsHash,
+    fileName,
+    fileSize,
+    trusteeEmail // New trustee field
+  } = req.body;
+
+  if (!walletAddress || !title || !encryptedSecret || !encryptedKeyForUser) {
+    return res.status(400).send({
+      success: false,
+      message: "Fields walletAddress, title, encryptedSecret, and encryptedKeyForUser are required",
+    });
+  }
+
+  try {
+    // Find user by wallet address
+    const user = await getUserByWalletAddress(walletAddress);
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found with this wallet address",
+      });
+    }
+
+    const vaultData: CreateVaultData = {
+      userId: user.id.toString(),
+      title,
+      description,
+      encryptedSecret,
+      encryptedKeyForUser,
+      secretType: secretType || SecretType.NOTE,
+      ipfsHash,
+      fileName,
+      fileSize: fileSize ? parseInt(fileSize) : undefined,
+      trusteeEmail
+    };
+
+    const result = await createVault(vaultData);
+
+    return res.status(201).send({
+      success: true,
+      message: "Successfully created new vault",
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+async function getUserById(userId: string) {
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+
+  const user = await fetchUserById(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  return user;
+}
