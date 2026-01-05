@@ -6,8 +6,6 @@ import User from "../model/user";
 export interface CreateTrusteeAccessData {
   originalVaultId: number;
   trusteeEmail: string;
-  originalVaultId: number;
-  trusteeEmail: string;
   encryptedKeyForTrustee: string;
 }
 
@@ -15,7 +13,6 @@ export async function createTrusteeAccess(data: CreateTrusteeAccessData): Promis
   try {
     console.log(`Creating trustee access for vault ID: ${data.originalVaultId} with trustee email: ${data.trusteeEmail}`);
     const trusteeVaultId = TrusteeAccess.generateVaultId();
-    console.log(`Generated trustee vault ID: ${trusteeVaultId}`);
     console.log(`Generated trustee vault ID: ${trusteeVaultId}`);
 
     // Log the creation for debugging
