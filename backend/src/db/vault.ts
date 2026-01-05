@@ -335,3 +335,4 @@ export async function getFileVaults(userId: string): Promise<Vault[]> {
     throw new Error(`Failed to get file vaults: ${error.message}`);
   }
 }
+

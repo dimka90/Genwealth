@@ -134,3 +134,4 @@ export async function activateRecoveryForUser(userId: string): Promise<TrusteeAc
 }
 
 export { TrusteeAccess };
+

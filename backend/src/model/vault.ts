@@ -115,3 +115,4 @@ Vault.belongsTo(User, { foreignKey: "userId", as: "user" });
 User.hasMany(Vault, { foreignKey: "userId", as: "vaults" });
 
 export default Vault;
+

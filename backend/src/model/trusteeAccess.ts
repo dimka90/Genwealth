@@ -91,3 +91,4 @@ TrusteeAccess.belongsTo(Vault, { foreignKey: "originalVaultId", as: "vault" });
 Vault.hasOne(TrusteeAccess, { foreignKey: "originalVaultId", as: "trusteeAccess" });
 
 export default TrusteeAccess;
+
