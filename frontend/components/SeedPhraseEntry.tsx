@@ -3,6 +3,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { FaKey, FaLock } from "react-icons/fa";
 import { usePrivy } from "@privy-io/react-auth";
+import { generateMasterKey, encryptWithKey, encryptMasterKeyWithPassword } from "@/lib/crypto";
 
 export default function SeedPhraseEntry() {
   const { user } = usePrivy();
@@ -10,14 +11,15 @@ export default function SeedPhraseEntry() {
   const [confirmSeedPhrase, setConfirmSeedPhrase] = useState("");
   const [pin, setPin] = useState("");
   const [trusteeEmail, setTrusteeEmail] = useState("");
+  const [trusteePin, setTrusteePin] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
 
   // simulate encryption (replace with real crypto later)
-  const encryptSecret = (text: string) => {
-    return btoa(text); // base64 encode for demo
-  };
+  // const encryptSecret = (text: string) => {
+  //   return btoa(text); // base64 encode for demo
+  // };
 
   const handleSubmit = async () => {
     if (!seedPhrase || seedPhrase !== confirmSeedPhrase) return;
@@ -28,8 +30,20 @@ export default function SeedPhraseEntry() {
 
     setLoading(true);
     try {
-      const encryptedSecret = encryptSecret(seedPhrase);
-      const encryptedAESKey = encryptSecret(pin);
+      // 1. Generate a random Master Key for this vault
+      const masterKey = generateMasterKey();
+
+      // 2. Encrypt the secret (Seed Phrase) with the Master Key
+      const encryptedSecret = encryptWithKey(seedPhrase, masterKey);
+
+      // 3. Encrypt the Master Key with the User's PIN
+      const encryptedKeyForUser = await encryptMasterKeyWithPassword(masterKey, pin);
+
+      // 4. Encrypt the Master Key with Trustee's Email/Password (if provided)
+      let encryptedKeyForTrustee = '';
+      if (trusteeEmail && trusteePin) {
+        encryptedKeyForTrustee = await encryptMasterKeyWithPassword(masterKey, trusteePin);
+      }
 
       const body = {
         userId: user.id,
@@ -37,9 +51,8 @@ export default function SeedPhraseEntry() {
         title,
         description,
         encryptedSecret,
-        encryptedAESKey,
-        secretType: "note",
-        // trusteeEmail,
+        encryptedKeyForUser,
+        encryptedKeyForTrustee
       };
 
       const res = await fetch("http://localhost:3000/api/vaults", {
@@ -124,6 +137,21 @@ export default function SeedPhraseEntry() {
             value={trusteeEmail}
             onChange={(e) => setTrusteeEmail(e.target.value)}
             className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
+            placeholder="trustee@example.com"
+          />
+        </div>
+
+        {/* Trustee PIN */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Trustee Access Password (Share this securely with them!)
+          </label>
+          <input
+            type="password"
+            value={trusteePin}
+            onChange={(e) => setTrusteePin(e.target.value)}
+            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white"
+            placeholder="Create a password for your trustee..."
           />
         </div>
 
@@ -156,11 +184,10 @@ export default function SeedPhraseEntry() {
 
         <button
           onClick={handleSubmit}
-          className={`w-full py-3 rounded-lg font-medium transition-colors mt-4 ${
-            seedPhrase && seedPhrase === confirmSeedPhrase && !loading
-              ? "bg-indigo-500 hover:bg-indigo-600 text-white"
-              : "bg-gray-700 text-gray-400 cursor-not-allowed"
-          }`}
+          className={`w-full py-3 rounded-lg font-medium transition-colors mt-4 ${seedPhrase && seedPhrase === confirmSeedPhrase && !loading
+            ? "bg-indigo-500 hover:bg-indigo-600 text-white"
+            : "bg-gray-700 text-gray-400 cursor-not-allowed"
+            }`}
           disabled={!seedPhrase || seedPhrase !== confirmSeedPhrase || loading}
         >
           {loading ? "Encrypting..." : "Encrypt and Continue"}
