@@ -1,336 +1,475 @@
+import { Request, Response } from "express";
+import {
+  createVault,
+  getVaultById,
+  getVaultsByUserId,
+  getVaultsByUserWallet,
+  getVaultsByType,
+  updateVault,
+  deleteVault,
+  hardDeleteVault,
+  getUserVaultStats,
+  searchVaults,
+  getFileVaults,
+  CreateVaultData,
+  UpdateVaultData
+} from "../db/vault";
+import { SecretType } from "../model/vault";
+import { getUserByWalletAddress } from "../db/user";
+import { createTrusteeAccess } from "../db/trusteeAccess";
+import emailService from "../services/email";
+import { getUserById as fetchUserById } from "../db/user";
 
-import Vault, { SecretType, VaultRecoveryStatus } from "../model/vault";
-import { Op } from "sequelize";
-import User from "../model/user";
 
-export interface CreateVaultData {
-  userId: string;
-  title: string;
-  description?: string;
-  encryptedSecret: string;
-  secretType?: SecretType;
-  ipfsHash?: string;
-  fileName?: string;
-  fileSize?: number;
-  trusteeEmail?: string;
-}
 
-export interface UpdateVaultData {
-  title?: string;
-  description?: string;
-  encryptedSecret?: string;
-  secretType?: SecretType;
-  ipfsHash?: string;
-  fileName?: string;
-  fileSize?: number;
-  isActive?: boolean;
-  trusteeEmail?: string;
-  recoveryStatus?: VaultRecoveryStatus;
-}
+export async function createVaultController(req: Request, res: Response): Promise<Response> {
 
-export async function createVault(vaultData: CreateVaultData): Promise<Vault> {
+  const {
+    userId,
+    title,
+    description,
+    encryptedSecret,
+    encryptedKeyForUser,
+    encryptedKeyForTrustee,
+    secretType,
+    ipfsHash,
+    fileName,
+    fileSize,
+    trusteeEmail
+  } = req.body;
+
+  if (!userId || !title || !encryptedSecret || !encryptedKeyForUser) {
+    return res.status(400).send({
+      success: false,
+      message: "Fields userId, title, encryptedSecret, and encryptedKeyForUser are required",
+    });
+  }
+
+  // If trustee is set, we need the encrypted key for them
+  if (trusteeEmail && !encryptedKeyForTrustee) {
+    return res.status(400).send({
+      success: false,
+      message: "encryptedKeyForTrustee is required when setting a trustee",
+    });
+  }
+
   try {
-    const user = await User.findByPk(vaultData.userId);
+    // Get user info for email
+    const user = await getUserById(userId);
     if (!user) {
-      throw new Error('User not found');
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
     }
 
-    const vault = await Vault.create(vaultData as any);
-    return vault;
-  } catch (error: any) {
-    throw new Error(`Failed to create vault: ${error.message}`);
-  }
-}
+    // Create the main vault
+    const vaultData: CreateVaultData = {
+      userId,
+      title,
+      description,
+      encryptedSecret,
+      encryptedKeyForUser,
+      secretType: secretType || SecretType.NOTE,
+      ipfsHash,
+      fileName,
+      fileSize: fileSize ? parseInt(fileSize) : undefined,
+      trusteeEmail
+    };
 
-export async function getVaultById(id: string): Promise<Vault | null> {
-  try {
-    return await Vault.findByPk(id, {
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'email', 'walletAddress', 'lastLogin', 'inactivityMonths']
-        }
-      ]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get vault by ID: ${error.message}`);
-  }
-}
+    const vault = await createVault(vaultData);
 
-export async function findVaultByRecoveryToken(token: string): Promise<Vault | null> {
-  try {
-    return await Vault.findOne({
-      where: { 
-        recoveryToken: token,
-        isActive: true 
-      },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'email', 'walletAddress', 'lastLogin', 'inactivityMonths']
-        }
-      ]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to find vault by recovery token: ${error.message}`);
-  }
-}
+    console.log("Vault created successfully:", vault.id);
+    let trusteeVaultId = null;
 
-export async function getVaultsByUserId(userId: string): Promise<Vault[]> {
-  try {
-    return await Vault.findAll({
-      where: { 
-        userId,
-        isActive: true
-      },
-      order: [['createdAt', 'DESC']]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get vaults by user ID: ${error.message}`);
-  }
-}
-
-export async function getVaultsByUserWallet(walletAddress: string): Promise<Vault[]> {
-  try {
-    return await Vault.findAll({
-      include: [
-        {
-          model: User,
-          as: 'user',
-          where: { walletAddress },
-          attributes: ['id', 'email', 'walletAddress']
-        }
-      ],
-      where: { isActive: true },
-      order: [['createdAt', 'DESC']]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get vaults by wallet address: ${error.message}`);
-  }
-}
-
-
-export async function getVaultsByTrustee(trusteeEmail: string): Promise<Vault[]> {
-  try {
-    return await Vault.findAll({
-      where: { 
+    // Create trustee access if trustee email and key provided
+    if (trusteeEmail && encryptedKeyForTrustee) {
+      const trusteeAccess = await createTrusteeAccess({
+        originalVaultId: parseInt(vault.id, 10),
         trusteeEmail,
-        isActive: true
-      },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'email', 'walletAddress', 'lastLogin', 'inactivityMonths']
-        }
-      ],
-      order: [['createdAt', 'DESC']]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get vaults by trustee: ${error.message}`);
-  }
-}
+        encryptedKeyForTrustee
+      });
 
-// NEW: Get vaults that need recovery (inactive users with trustees)
-export async function getVaultsRequiringRecovery(): Promise<Vault[]> {
-  try {
-    const vaults = await Vault.findAll({
-      where: {
-        trusteeEmail: { [Op.ne]: null },
-        recoveryStatus: VaultRecoveryStatus.ACTIVE,
-        isActive: true
-      },
-      include: [
-        {
-          model: User,
-          as: 'user',
-          attributes: ['id', 'email', 'walletAddress', 'lastLogin', 'inactivityMonths']
-        }
-      ]
-    });
+      console.log("Trustee access created successfully:", trusteeAccess.trusteeVaultId);
+      trusteeVaultId = trusteeAccess.trusteeVaultId;
 
-    // Filter to only include vaults where user is actually inactive
-    return vaults.filter(vault => {
-      if (!vault.user) return false;
-      
-      const now = new Date();
-      const lastLogin = new Date(vault.user.lastLogin);
-      const monthsDiff = (now.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24 * 30);
-      
-      return monthsDiff > vault.user.inactivityMonths;
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get vaults requiring recovery: ${error.message}`);
-  }
-}
-
-// NEW: Get recovery stats for monitoring
-export async function getRecoveryStats(): Promise<any> {
-  try {
-    const totalWithTrustees = await Vault.count({
-      where: {
-        trusteeEmail: { [Op.ne]: null },
-        isActive: true
+      // Send trustee designation email
+      if (process.env.NODE_ENV !== "test") {
+        await emailService.sendTrusteeDesignationEmail({
+          trusteeEmail,
+          ownerEmail: user.email,
+          ownerName: user.email.split('@')[0],
+          vaultTitle: vault.title,
+          trusteeVaultId: trusteeVaultId,
+          inactivityMonths: user.inactivityMonths
+        });
       }
-    });
+    }
 
-    const byStatus = await Vault.findAll({
-      where: {
-        trusteeEmail: { [Op.ne]: null },
-        isActive: true
+    return res.status(201).send({
+      success: true,
+      message: "Successfully created new vault" + (trusteeEmail ? " and notified trustee" : ""),
+      data: {
+        vault: vault,
+        trusteeVaultId: trusteeVaultId,
+        trusteeNotified: !!trusteeEmail
       },
-      attributes: [
-        'recoveryStatus',
-        [Vault.sequelize!.fn('COUNT', Vault.sequelize!.col('id')), 'count']
-      ],
-      group: ['recoveryStatus'],
-      raw: true
     });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
 
-    const needingRecovery = await getVaultsRequiringRecovery();
 
-    return {
-      totalVaultsWithTrustees: totalWithTrustees,
-      vaultsNeedingRecovery: needingRecovery.length,
-      recoveryStatusBreakdown: byStatus
+
+export async function getVaultController(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).send({
+      success: false,
+      message: "Vault ID is required",
+    });
+  }
+
+  try {
+    const vault = await getVaultById(id);
+
+    if (!vault) {
+      return res.status(404).send({
+        success: false,
+        message: "Vault not found",
+      });
+    }
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault retrieved successfully",
+      data: vault,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getUserVaultsController(req: Request, res: Response): Promise<Response> {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID is required",
+    });
+  }
+
+  try {
+    const vaults = await getVaultsByUserId(userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "User vaults retrieved successfully",
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getUserVaultsByWalletController(req: Request, res: Response): Promise<Response> {
+  const { walletAddress } = req.params;
+
+  if (!walletAddress) {
+    return res.status(400).send({
+      success: false,
+      message: "Wallet address is required",
+    });
+  }
+
+  try {
+    const vaults = await getVaultsByUserWallet(walletAddress);
+
+    return res.status(200).send({
+      success: true,
+      message: "User vaults retrieved successfully",
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getVaultsByTypeController(req: Request, res: Response): Promise<Response> {
+  const { userId, secretType } = req.params;
+
+  if (!userId || !secretType) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID and secret type are required",
+    });
+  }
+
+  // Validate secret type
+  if (!Object.values(SecretType).includes(secretType as SecretType)) {
+    return res.status(400).send({
+      success: false,
+      message: "Invalid secret type",
+    });
+  }
+
+  try {
+    const vaults = await getVaultsByType(userId, secretType as SecretType);
+
+    return res.status(200).send({
+      success: true,
+      message: `Vaults of type ${secretType} retrieved successfully`,
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function updateVaultController(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+  const updateData: UpdateVaultData = req.body;
+
+  if (!id) {
+    return res.status(400).send({
+      success: false,
+      message: "Vault ID is required",
+    });
+  }
+
+  try {
+    const result = await updateVault(id, updateData);
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault updated successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function deleteVaultController(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+  const { userId } = req.body;
+
+  if (!id || !userId) {
+    return res.status(400).send({
+      success: false,
+      message: "Vault ID and User ID are required",
+    });
+  }
+
+  try {
+    await deleteVault(id, userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault deleted successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function hardDeleteVaultController(req: Request, res: Response): Promise<Response> {
+  const { id } = req.params;
+  const { userId } = req.body;
+
+  if (!id || !userId) {
+    return res.status(400).send({
+      success: false,
+      message: "Vault ID and User ID are required",
+    });
+  }
+
+  try {
+    await hardDeleteVault(id, userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault permanently deleted successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getUserVaultStatsController(req: Request, res: Response): Promise<Response> {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID is required",
+    });
+  }
+
+  try {
+    const stats = await getUserVaultStats(userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "User vault statistics retrieved successfully",
+      data: stats,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function searchVaultsController(req: Request, res: Response): Promise<Response> {
+  const { userId } = req.params;
+  const { q: searchTerm } = req.query;
+
+  if (!userId || !searchTerm) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID and search term are required",
+    });
+  }
+
+  try {
+    const vaults = await searchVaults(userId, searchTerm as string);
+
+    return res.status(200).send({
+      success: true,
+      message: "Vault search completed successfully",
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+export async function getFileVaultsController(req: Request, res: Response): Promise<Response> {
+  const { userId } = req.params;
+
+  if (!userId) {
+    return res.status(400).send({
+      success: false,
+      message: "User ID is required",
+    });
+  }
+
+  try {
+    const vaults = await getFileVaults(userId);
+
+    return res.status(200).send({
+      success: true,
+      message: "File vaults retrieved successfully",
+      data: vaults,
+    });
+  } catch (error: any) {
+    return res.status(500).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
+  }
+}
+
+// Helper controller to create vault with wallet authentication
+export async function createVaultByWalletController(req: Request, res: Response): Promise<Response> {
+  const {
+    walletAddress,
+    title,
+    description,
+    encryptedSecret,
+    encryptedKeyForUser,
+    secretType,
+    ipfsHash,
+    fileName,
+    fileSize,
+    trusteeEmail // New trustee field
+  } = req.body;
+
+  if (!walletAddress || !title || !encryptedSecret || !encryptedKeyForUser) {
+    return res.status(400).send({
+      success: false,
+      message: "Fields walletAddress, title, encryptedSecret, and encryptedKeyForUser are required",
+    });
+  }
+
+  try {
+    // Find user by wallet address
+    const user = await getUserByWalletAddress(walletAddress);
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found with this wallet address",
+      });
+    }
+
+    const vaultData: CreateVaultData = {
+      userId: user.id.toString(),
+      title,
+      description,
+      encryptedSecret,
+      encryptedKeyForUser,
+      secretType: secretType || SecretType.NOTE,
+      ipfsHash,
+      fileName,
+      fileSize: fileSize ? parseInt(fileSize) : undefined,
+      trusteeEmail
     };
+
+    const result = await createVault(vaultData);
+
+    return res.status(201).send({
+      success: true,
+      message: "Successfully created new vault",
+      data: result,
+    });
   } catch (error: any) {
-    throw new Error(`Failed to get recovery stats: ${error.message}`);
+    return res.status(400).send({
+      success: false,
+      message: `Error: ${error.message}`,
+    });
   }
 }
-
-export async function getVaultsByType(userId: string, secretType: SecretType): Promise<Vault[]> {
-  try {
-    return await Vault.findAll({
-      where: { 
-        userId,
-        secretType,
-        isActive: true
-      },
-      order: [['createdAt', 'DESC']]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get vaults by type: ${error.message}`);
+async function getUserById(userId: string) {
+  if (!userId) {
+    throw new Error("User ID is required");
   }
-}
 
-export async function updateVault(id: string, updateData: UpdateVaultData): Promise<Vault> {
-  try {
-    const vault = await Vault.findByPk(id);
-    if (!vault) {
-      throw new Error('Vault not found');
-    }
-
-    await vault.update(updateData);
-    return vault;
-  } catch (error: any) {
-    throw new Error(`Failed to update vault: ${error.message}`);
+  const user = await fetchUserById(userId);
+  if (!user) {
+    throw new Error("User not found");
   }
-}
 
-export async function deleteVault(id: string, userId: string): Promise<boolean> {
-  try {
-    const vault = await Vault.findOne({
-      where: { id, userId }
-    });
-    
-    if (!vault) {
-      throw new Error('Vault not found or unauthorized');
-    }
-
-    // Soft delete - set isActive to false
-    await vault.update({ isActive: false });
-    return true;
-  } catch (error: any) {
-    throw new Error(`Failed to delete vault: ${error.message}`);
-  }
-}
-
-export async function hardDeleteVault(id: string, userId: string): Promise<boolean> {
-  try {
-    const vault = await Vault.findOne({
-      where: { id, userId }
-    });
-    
-    if (!vault) {
-      throw new Error('Vault not found or unauthorized');
-    }
-
-    await vault.destroy();
-    return true;
-  } catch (error: any) {
-    throw new Error(`Failed to permanently delete vault: ${error.message}`);
-  }
-}
-
-export async function getUserVaultStats(userId: string): Promise<any> {
-  try {
-    const stats = await Vault.findAll({
-      where: { userId, isActive: true },
-      attributes: [
-        'secretType',
-        [Vault.sequelize!.fn('COUNT', Vault.sequelize!.col('id')), 'count']
-      ],
-      group: ['secretType'],
-      raw: true
-    });
-
-    const total = await Vault.count({
-      where: { userId, isActive: true }
-    });
-
-    const withTrustees = await Vault.count({
-      where: { 
-        userId, 
-        isActive: true,
-        trusteeEmail: { [Op.ne]: null }
-      }
-    });
-
-    return {
-      total,
-      withTrustees,
-      byType: stats
-    };
-  } catch (error: any) {
-    throw new Error(`Failed to get vault stats: ${error.message}`);
-  }
-}
-
-export async function searchVaults(userId: string, searchTerm: string): Promise<Vault[]> {
-  try {
-    return await Vault.findAll({
-      where: {
-        userId,
-        isActive: true,
-        [Op.or]: [
-          { title: { [Op.iLike]: `%${searchTerm}%` } },
-          { description: { [Op.iLike]: `%${searchTerm}%` } }
-        ]
-      },
-      order: [['createdAt', 'DESC']]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to search vaults: ${error.message}`);
-  }
-}   
-
-export async function getFileVaults(userId: string): Promise<Vault[]> {
-  try {
-    return await Vault.findAll({
-      where: {
-        userId,
-        secretType: SecretType.DOCUMENT,
-        ipfsHash: {
-          [Op.ne]: null
-        },
-        isActive: true
-      },
-      order: [['createdAt', 'DESC']]
-    });
-  } catch (error: any) {
-    throw new Error(`Failed to get file vaults: ${error.message}`);
-  }
+  return user;
 }
