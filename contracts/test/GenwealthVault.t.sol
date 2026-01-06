@@ -51,4 +51,18 @@ contract GenwealthVaultTest is Test {
         vm.expectRevert(GenwealthVault.StillActive.selector);
         vault.initiateRecovery(owner);
     }
+
+    function test_RecoverySucceedsAfterPeriod() public {
+        vm.prank(owner);
+        vault.setupVault(inactivityPeriod);
+        vm.prank(owner);
+        vault.addTrustee(trustee);
+        
+        vm.warp(block.timestamp + 31 days);
+        
+        vm.prank(trustee);
+        vault.initiateRecovery(owner);
+        
+        assertTrue(vault.isRecoveryActive(owner));
+    }
 }
