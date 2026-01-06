@@ -65,4 +65,21 @@ contract GenwealthVaultTest is Test {
         
         assertTrue(vault.isRecoveryActive(owner));
     }
+
+    function test_RecoveryCancelledByCheckIn() public {
+        vm.prank(owner);
+        vault.setupVault(inactivityPeriod);
+        vm.prank(owner);
+        vault.addTrustee(trustee);
+        
+        vm.warp(block.timestamp + 31 days);
+        
+        vm.prank(trustee);
+        vault.initiateRecovery(owner);
+        assertTrue(vault.isRecoveryActive(owner));
+        
+        vm.prank(owner);
+        vault.checkIn();
+        assertFalse(vault.isRecoveryActive(owner));
+    }
 }
