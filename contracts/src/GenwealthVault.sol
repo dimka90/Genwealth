@@ -18,7 +18,10 @@ contract GenwealthVault {
     // owner => trustee => isAuthorized
     mapping(address => mapping(address => bool)) public isTrustee;
 
-    event CheckedIn(address indexed owner, uint256 timestamp);
+    event TrusteeAdded(address indexed owner, address indexed trustee);
+    event RecoveryCancelled(address indexed owner);
+
+    error NotOwner();
 
     /**
      * @dev Initialize or update vault settings.
@@ -30,5 +33,32 @@ contract GenwealthVault {
         vaults[msg.sender].recoveryActive = false;
         
         emit CheckedIn(msg.sender, block.timestamp);
+    }
+
+    /**
+     * @dev User checks in to reset the inactivity timer.
+     */
+    function checkIn() external {
+        vaults[msg.sender].lastCheckIn = block.timestamp;
+        if (vaults[msg.sender].recoveryActive) {
+            vaults[msg.sender].recoveryActive = false;
+            emit RecoveryCancelled(msg.sender);
+        }
+        emit CheckedIn(msg.sender, block.timestamp);
+    }
+
+    /**
+     * @dev Add a trustee who can initiate recovery.
+     */
+    function addTrustee(address _trustee) external {
+        isTrustee[msg.sender][_trustee] = true;
+        emit TrusteeAdded(msg.sender, _trustee);
+    }
+
+    /**
+     * @dev Remove a trustee.
+     */
+    function removeTrustee(address _trustee) external {
+        isTrustee[msg.sender][_trustee] = false;
     }
 }
