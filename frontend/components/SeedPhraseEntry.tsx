@@ -55,7 +55,8 @@ export default function SeedPhraseEntry() {
         encryptedKeyForTrustee
       };
 
-      const res = await fetch("http://localhost:3000/api/vaults", {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      const res = await fetch(`${apiUrl}/api/vaults`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

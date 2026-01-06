@@ -23,11 +23,20 @@ export default function RecoveryFlow() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await sendCode({ email });
-      toast.success(`Verification code sent to ${email}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      const res = await fetch(`${apiUrl}/api/trustee-recovery/initiate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ trusteeVaultId: email }), // Using email field as ID for now
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to send code");
+
+      toast.success(`Verification code sent to trustee email`);
       setStep("code");
-    } catch (err) {
-      toast.error("Failed to send verification code. Please try again.");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to send verification code.");
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -37,30 +46,49 @@ export default function RecoveryFlow() {
   const handleVerifyCode = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      await loginWithCode({ code });
-      toast.success("Successfully verified!");
-      setStep("recovery");
-    } catch (err) {
-      toast.error("Invalid verification code. Please try again.");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
+    // In this flow, we actually just move to the password step
+    // The OTP will be sent along with the recovery password in the next step
+    setStep("recovery");
+    setIsLoading(false);
   };
 
-  const handleRecoveryKeySubmit = (e: FormEvent): void => {
+  const handleRecoveryKeySubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
-    // In a real app, this would verify the recovery key and fetch the seed phrase
     setIsLoading(true);
-    setTimeout(() => {
-      // Simulate API call to get seed phrase
-      setSeedPhrase(
-        "apple banana cherry dragon elephant flower grape hat ice juice kiwi lemon"
-      );
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+      const res = await fetch(`${apiUrl}/api/trustee-recovery/verify-and-recover`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trusteeVaultId: email,
+          otp: code,
+          recoveryPassword: recoveryKey // This is never sent to backend in ZK but here we release blobs
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Recovery failed");
+
+      const { encryptedSecret, encryptedKeyForTrustee } = data.data;
+
+      // DECRYPTION LOGIC
+      const { decryptMasterKeyWithPassword, decryptWithKey } = await import("@/lib/crypto");
+
+      const masterKey = await decryptMasterKeyWithPassword(encryptedKeyForTrustee, recoveryKey);
+      if (!masterKey) throw new Error("Invalid recovery password");
+
+      const decrypted = decryptWithKey(encryptedSecret, masterKey);
+      if (!decrypted) throw new Error("Failed to decrypt secret");
+
+      setSeedPhrase(decrypted);
       setIsLoading(false);
       toast.success("Recovery successful!");
-    }, 1500);
+    } catch (err: any) {
+      toast.error(err.message || "Recovery failed. Please check your credentials.");
+      console.error(err);
+      setIsLoading(false);
+    }
   };
 
   const handleBack = (): void => {
@@ -92,8 +120,8 @@ export default function RecoveryFlow() {
           {step === "email"
             ? "Recovery Process"
             : step === "code"
-            ? "Validation"
-            : "Recover Seed Phrase"}
+              ? "Validation"
+              : "Recover Seed Phrase"}
         </h2>
       </div>
 
@@ -128,11 +156,10 @@ export default function RecoveryFlow() {
               <button
                 type="submit"
                 disabled={!email.includes("@") || isLoading}
-                className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${
-                  email.includes("@") && !isLoading
-                    ? "bg-indigo-500 hover:bg-indigo-600 text-white"
-                    : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                }`}
+                className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${email.includes("@") && !isLoading
+                  ? "bg-indigo-500 hover:bg-indigo-600 text-white"
+                  : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                  }`}
               >
                 {isLoading ? (
                   <>
@@ -189,11 +216,10 @@ export default function RecoveryFlow() {
                 <button
                   type="submit"
                   disabled={code.length < 6 || isLoading}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${
-                    code.length >= 6 && !isLoading
-                      ? "bg-indigo-500 hover:bg-indigo-600 text-white"
-                      : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${code.length >= 6 && !isLoading
+                    ? "bg-indigo-500 hover:bg-indigo-600 text-white"
+                    : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                    }`}
                 >
                   {isLoading ? (
                     <>
@@ -249,11 +275,10 @@ export default function RecoveryFlow() {
                 <button
                   type="submit"
                   disabled={!recoveryKey || isLoading || !!seedPhrase}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${
-                    recoveryKey && !isLoading && !seedPhrase
-                      ? "bg-indigo-500 hover:bg-indigo-600 text-white"
-                      : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                  }`}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${recoveryKey && !isLoading && !seedPhrase
+                    ? "bg-indigo-500 hover:bg-indigo-600 text-white"
+                    : "bg-gray-700 text-gray-400 cursor-not-allowed"
+                    }`}
                 >
                   {isLoading ? (
                     <>

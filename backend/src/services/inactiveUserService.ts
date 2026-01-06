@@ -2,9 +2,10 @@ import { getInactiveUsers } from "../db/user";
 import { activateRecoveryForUser, getVaultsNeedingRecoveryActivation } from "../db/trusteeAccess";
 import emailService from "./email";
 import { User } from "../db/user";
+import { RecoveryStatus } from "../model/user";
 
 export class InactiveUserService {
-  
+
   /**
    * Main function to check and activate recovery for inactive users
    * Should be called by a cron job daily
@@ -12,15 +13,15 @@ export class InactiveUserService {
   static async checkAndActivateRecovery(): Promise<void> {
     try {
       console.log('Starting inactive user check...');
-      
+
       const inactiveUsers = await getInactiveUsers();
-      
+
       console.log(`Found ${inactiveUsers.length} inactive users`);
-      
+
       for (const user of inactiveUsers) {
         await this.processInactiveUser(user);
       }
-      
+
       console.log('Inactive user check completed');
     } catch (error: any) {
       console.error('Error in inactive user check:', error.message);
@@ -34,26 +35,26 @@ export class InactiveUserService {
   private static async processInactiveUser(user: User): Promise<void> {
     try {
       console.log(`Processing inactive user: ${user.email}`);
-      
+
       // Calculate how long the user has been inactive
       const now = new Date();
       const lastLogin = new Date(user.lastLogin);
       const daysSinceLogin = Math.floor((now.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
       const monthsSinceLogin = daysSinceLogin / 30;
-      
+
       // Check if user has exceeded their inactivity threshold
       if (monthsSinceLogin >= user.inactivityMonths) {
         console.log(`User ${user.email} has been inactive for ${daysSinceLogin} days (${monthsSinceLogin.toFixed(1)} months)`);
-        
+
         // Activate recovery for all user's vaults that have trustees
         const activatedRecords = await activateRecoveryForUser(user.id.toString());
-        
+
         if (activatedRecords.length > 0) {
           console.log(`Activated recovery for ${activatedRecords.length} vaults for user ${user.email}`);
-        
+
           await this.notifyTrustees(user, activatedRecords);
           await user.update({
-            recoveryStatus: 'RECOVERY_AVAILABLE' // You may need to add this status
+            recoveryStatus: RecoveryStatus.TRUSTEES_NOTIFIED
           });
         }
       }
@@ -78,7 +79,7 @@ export class InactiveUserService {
             daysSinceLastLogin: Math.floor((Date.now() - new Date(user.lastLogin).getTime()) / (1000 * 60 * 60 * 24))
           });
         }
-        
+
         console.log(`Recovery available notification sent to ${record.trusteeEmail} for vault ${record.trusteeVaultId}`);
       } catch (error: any) {
         console.error(`Failed to send notification to ${record.trusteeEmail}:`, error.message);
@@ -93,7 +94,7 @@ export class InactiveUserService {
     try {
       const inactiveUsers = await getInactiveUsers();
       const vaultsNeedingActivation = await getVaultsNeedingRecoveryActivation();
-      
+
       return {
         totalInactiveUsers: inactiveUsers.length,
         vaultsNeedingActivation: vaultsNeedingActivation.length,
