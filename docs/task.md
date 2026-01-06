@@ -1,0 +1,26 @@
+# Task: Study Genwealth Codebase
+
+- [/] Explore project structure and README [1/1]
+    - [x] Read root README.md
+- [x] Analyze backend implementation [3/3]
+    - [x] Review `src` directory structure
+    - [x] Examine models and database schema
+    - [x] Analyze API routes and controllers
+- [x] Analyze frontend implementation [2/2]
+    - [x] Review component structure
+    - [x] Examine encryption/decryption logic
+- [x] Research smart contract integration [1/1]
+    - [x] Search for Solidity files or contract interactions
+- [x] Enhance Backend Implementation [3/3]
+    - [x] Verify database models and functions
+    - [x] Complete inactivity monitoring in `CronScheduler`
+    - [x] Refine trustee notification logic
+- [x] Complete Frontend Implementation [3/3]
+    - [x] Implement real Shamir's Secret Sharing in `shamir.ts`
+    - [x] Implement actual IPFS upload/retrieve logic
+    - [x] Connect `RecoveryFlow` to backend endpoints
+- [/] Implement Smart Contracts [0/3]
+    - [/] Initialize Forge project
+    - [ ] Develop `GenwealthVault` contract (Dead Man's Switch logic)
+    - [ ] Write unit tests for the vault
+- [x] Summarize findings [1/1]
