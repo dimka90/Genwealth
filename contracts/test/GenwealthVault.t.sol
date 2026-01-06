@@ -82,4 +82,15 @@ contract GenwealthVaultTest is Test {
         vault.checkIn();
         assertFalse(vault.isRecoveryActive(owner));
     }
+
+    function test_OnlyTrusteeCanRecover() public {
+        vm.prank(owner);
+        vault.setupVault(inactivityPeriod);
+        
+        vm.warp(block.timestamp + 31 days);
+        
+        vm.prank(address(99)); // Not a trustee
+        vm.expectRevert(GenwealthVault.NotTrustee.selector);
+        vault.initiateRecovery(owner);
+    }
 }
