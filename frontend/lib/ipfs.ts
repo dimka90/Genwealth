@@ -5,7 +5,7 @@
  * For production, configure PINATA_API_KEY and PINATA_SECRET_API_KEY.
  */
 
-export const uploadToIPFS = async (file: File | Blob | string): Promise<string> => {
+export const uploadToIPFS = async (_file: File | Blob | string): Promise<string> => {
   const isDevelopment = process.env.NODE_ENV === 'development';
   const pinataApiKey = process.env.NEXT_PUBLIC_PINATA_API_KEY;
 
@@ -26,8 +26,8 @@ export const uploadToIPFS = async (file: File | Blob | string): Promise<string> 
   });
 };
 
-export const retrieveFromIPFS = async (cid: string): Promise<any> => {
-  const gateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://gateway.pinata.cloud/ipfs/';
+export const retrieveFromIPFS = async (cid: string): Promise<unknown> => {
+  const _gateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://gateway.pinata.cloud/ipfs/';
 
   // In a real app, we would fetch from the gateway
   // const response = await fetch(`${gateway}${cid}`);
