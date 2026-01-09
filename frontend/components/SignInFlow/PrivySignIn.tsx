@@ -19,7 +19,7 @@ export default function PrivySignIn() {
       await sendCode({ email });
       toast.success(`Verification code sent to ${email}`);
       setStep("code");
-    } catch (err) {
+    } catch {
       toast.error("Failed to send verification code. Please try again.");
     } finally {
       setIsLoading(false);
@@ -31,7 +31,7 @@ export default function PrivySignIn() {
     try {
       await loginWithCode({ code });
       toast.success("Successfully signed in!");
-    } catch (err) {
+    } catch {
       toast.error("Invalid verification code. Please try again.");
     } finally {
       setIsLoading(false);
@@ -50,7 +50,7 @@ export default function PrivySignIn() {
           },
         }}
       />
-      
+
       <div className="flex items-center mb-6">
         <FaWallet className="text-indigo-500 text-2xl mr-3" />
         <h2 className="text-xl font-bold">
@@ -86,11 +86,10 @@ export default function PrivySignIn() {
               <button
                 onClick={handleSendCode}
                 disabled={!email.includes("@") || isLoading}
-                className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${
-                  email.includes("@") && !isLoading
+                className={`w-full flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${email.includes("@") && !isLoading
                     ? "bg-indigo-500 hover:bg-indigo-600 text-white"
                     : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                }`}
+                  }`}
               >
                 {isLoading ? (
                   <>
@@ -145,11 +144,10 @@ export default function PrivySignIn() {
                 <button
                   onClick={handleVerifyCode}
                   disabled={code.length < 6 || isLoading}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${
-                    code.length >= 6 && !isLoading
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-medium transition-colors ${code.length >= 6 && !isLoading
                       ? "bg-indigo-500 hover:bg-indigo-600 text-white"
                       : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                  }`}
+                    }`}
                 >
                   {isLoading ? (
                     <>
@@ -163,9 +161,9 @@ export default function PrivySignIn() {
                     </>
                   )}
                 </button>
-           
+
               </div>
-                   <CreateWalletButton />
+              <CreateWalletButton />
             </div>
           </motion.div>
         )}
