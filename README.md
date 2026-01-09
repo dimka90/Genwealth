@@ -49,7 +49,7 @@ sequenceDiagram
 
 - **Zero-Knowledge Privacy**: User data is encrypted client-side; the server only stores encrypted blobs.
 - **Trustee Designation**: Securely assign heirs or trusted individuals to recover specific vaults.
-- **Dead Man's Switch**: Automated inactivity checks (coming soon) to trigger recovery protocols.
+- **Dead Man's Switch**: Automated inactivity checks with configurable periods and "I'm Alive" check-ins.
 - **IPFS Integration**: Decentralized storage for large files and documents.
 
 ## 🛠 Tech Stack
