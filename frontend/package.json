@@ -20,7 +20,8 @@
     "react-icons": "^5.5.0",
     "react-intersection-observer": "^9.16.0",
     "tweetnacl": "^1.0.3",
-    "tweetnacl-util": "^0.15.1"
+    "tweetnacl-util": "^0.15.1",
+    "viem": "^2.44.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
