@@ -20,6 +20,8 @@ contract GenwealthVault {
 
     event RecoveryInitiated(address indexed owner, address indexed initiator);
     event RecoveryCancelled(address indexed owner);
+    event CheckedIn(address indexed owner, uint256 timestamp);
+    event TrusteeAdded(address indexed owner, address indexed trustee);
 
     error NotOwner();
     error NotTrustee();
@@ -87,5 +89,12 @@ contract GenwealthVault {
      */
     function isRecoveryActive(address _owner) external view returns (bool) {
         return vaults[_owner].recoveryActive;
+    }
+
+    /**
+     * @dev Get all vault settings for a given owner.
+     */
+    function getVaultSettings(address _owner) external view returns (VaultSettings memory) {
+        return vaults[_owner];
     }
 }
