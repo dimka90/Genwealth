@@ -14,6 +14,7 @@ export interface CreateVaultData {
   fileName?: string;
   fileSize?: number;
   trusteeEmail?: string;
+  threshold?: number;
 }
 
 export interface UpdateVaultData {
@@ -27,6 +28,8 @@ export interface UpdateVaultData {
   isActive?: boolean;
   trusteeEmail?: string;
   recoveryStatus?: VaultRecoveryStatus;
+  threshold?: number;
+  currentApprovals?: number;
 }
 
 export async function createVault(vaultData: CreateVaultData): Promise<Vault> {
