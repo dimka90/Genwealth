@@ -8,8 +8,8 @@ export function useGenwealthVault() {
 
     useEffect(() => {
         // Simple way to get address if window.ethereum exists
-        if (typeof window !== 'undefined' && window.ethereum) {
-            window.ethereum.request({ method: 'eth_requestAccounts' })
+        if (typeof window !== 'undefined' && (window as any).ethereum) {
+            (window as any).ethereum.request({ method: 'eth_requestAccounts' })
                 // @ts-ignore
                 .then((accounts: string[]) => {
                     if (accounts.length > 0) setAddress(accounts[0] as `0x${string}`);
@@ -25,6 +25,7 @@ export function useGenwealthVault() {
     interface VaultSettings {
         lastCheckIn: bigint;
         inactivityPeriod: bigint;
+        threshold: number;
         recoveryActive: boolean;
     }
 
@@ -45,10 +46,10 @@ export function useGenwealthVault() {
     };
 
     const checkIn = async () => {
-        if (!window.ethereum) return;
+        if (!(window as any).ethereum) return;
         const walletClient = createWalletClient({
             chain: baseSepolia,
-            transport: custom(window.ethereum)
+            transport: custom((window as any).ethereum)
         });
 
         const [account] = await walletClient.getAddresses();
@@ -61,11 +62,11 @@ export function useGenwealthVault() {
         });
     };
 
-    const setupVault = async (inactivityPeriod: number) => {
-        if (!window.ethereum) return;
+    const setupVault = async (inactivityPeriod: number, threshold: number = 1) => {
+        if (!(window as any).ethereum) return;
         const walletClient = createWalletClient({
             chain: baseSepolia,
-            transport: custom(window.ethereum)
+            transport: custom((window as any).ethereum)
         });
 
         const [account] = await walletClient.getAddresses();
@@ -73,7 +74,25 @@ export function useGenwealthVault() {
             address: GENWEALTH_VAULT_ADDRESS,
             abi: GENWEALTH_VAULT_ABI,
             functionName: 'setupVault',
-            args: [BigInt(inactivityPeriod)],
+            args: [BigInt(inactivityPeriod), threshold],
+            account,
+            chain: baseSepolia
+        });
+    };
+
+    const approveRecovery = async (ownerAddress: string) => {
+        if (!(window as any).ethereum) return;
+        const walletClient = createWalletClient({
+            chain: baseSepolia,
+            transport: custom((window as any).ethereum)
+        });
+
+        const [account] = await walletClient.getAddresses();
+        return walletClient.writeContract({
+            address: GENWEALTH_VAULT_ADDRESS,
+            abi: GENWEALTH_VAULT_ABI,
+            functionName: 'approveRecovery',
+            args: [ownerAddress as `0x${string}`],
             account,
             chain: baseSepolia
         });
@@ -83,6 +102,7 @@ export function useGenwealthVault() {
         address,
         getSettings,
         checkIn,
-        setupVault
+        setupVault,
+        approveRecovery
     };
 }
