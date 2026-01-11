@@ -35,7 +35,8 @@ export async function createVaultController(req: Request, res: Response): Promis
     ipfsHash,
     fileName,
     fileSize,
-    trusteeEmail
+    trusteeEmail,
+    threshold
   } = req.body;
 
   if (!userId || !title || !encryptedSecret || !encryptedKeyForUser) {
@@ -74,7 +75,8 @@ export async function createVaultController(req: Request, res: Response): Promis
       ipfsHash,
       fileName,
       fileSize: fileSize ? parseInt(fileSize) : undefined,
-      trusteeEmail
+      trusteeEmail,
+      threshold: threshold ? parseInt(threshold) : 1
     };
 
     const vault = await createVault(vaultData);
