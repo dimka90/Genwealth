@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 import SeedPhraseDisplay from "./SeedPhrase";
 import { combineShares } from "@/lib/shamir";
+import TrusteeApprovalList from "./TrusteeApprovalList";
 
 type Step = "method" | "email" | "code" | "recovery" | "multi-share";
 
@@ -139,6 +140,12 @@ export default function RecoveryFlow() {
               : "Recover Seed Phrase"}
         </h2>
       </div>
+
+      {email && step !== "recovery" && (
+        <div className="mb-6">
+          <TrusteeApprovalList ownerAddress={email} />
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {step === "email" ? (
