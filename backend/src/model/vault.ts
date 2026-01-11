@@ -28,6 +28,8 @@ class Vault extends Model {
   public fileName!: string | null;
   public fileSize!: number | null;
   public trusteeEmail!: string | null;
+  public threshold!: number;
+  public currentApprovals!: number;
   public isActive!: boolean;
   public recoveryStatus!: VaultRecoveryStatus;
   public recoveryToken!: string | null;
@@ -91,6 +93,16 @@ Vault.init(
       validate: {
         isEmail: true,
       }
+    },
+    threshold: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1,
+      allowNull: false,
+    },
+    currentApprovals: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
     },
     isActive: {
       type: DataTypes.BOOLEAN,
