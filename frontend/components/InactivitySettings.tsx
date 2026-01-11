@@ -6,6 +6,7 @@ import { FaClock, FaSave } from 'react-icons/fa';
 export default function InactivitySettings() {
     // Default 30 days in seconds
     const [periodDays, setPeriodDays] = useState(30);
+    const [threshold, setThreshold] = useState(1);
     const { setupVault } = useGenwealthVault();
     const [loading, setLoading] = useState(false);
 
@@ -13,8 +14,8 @@ export default function InactivitySettings() {
         setLoading(true);
         try {
             const seconds = periodDays * 24 * 60 * 60;
-            await setupVault(seconds);
-            alert("Inactivity period updated!");
+            await setupVault(seconds, threshold);
+            alert("Settings updated!");
         } catch (e) {
             console.error(e);
             alert("Failed to update settings");
@@ -43,7 +44,23 @@ export default function InactivitySettings() {
                         onChange={(e) => setPeriodDays(parseInt(e.target.value))}
                         className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     />
-                    <span className="text-white font-bold w-20 text-right">{periodDays} days</span>
+                </div>
+            </div>
+
+            <div className="mb-6">
+                <label className="block text-sm text-gray-400 mb-2">
+                    Required trustee approvals to recover:
+                </label>
+                <div className="flex items-center gap-4">
+                    <input
+                        type="number"
+                        min="1"
+                        max="5"
+                        value={threshold}
+                        onChange={(e) => setThreshold(parseInt(e.target.value) || 1)}
+                        className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    />
+                    <span className="text-white font-bold w-20 text-right">{threshold} {threshold === 1 ? 'trustee' : 'trustees'}</span>
                 </div>
             </div>
 
